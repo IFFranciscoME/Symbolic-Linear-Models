@@ -1,11 +1,12 @@
 
 """
 # -- --------------------------------------------------------------------------------------------------- -- #
-# -- project: Multiple Linear Regression Regularization with Elastic Net for future prices prediction    -- #
+# -- project: Multivariate Linear Symbolic Regression with Regularization using Elastic Net              -- #
+# -- for future prices prediction, the case for UsdMxn                                                   -- #
 # -- script: main.py : python script with the main functionality                                         -- #
 # -- author: IFFranciscoME                                                                               -- #
 # -- license: GPL-3.0 License                                                                            -- #
-# -- repository: https://github.com/IFFranciscoME/FuturesElasticNet                                      -- #
+# -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
 
