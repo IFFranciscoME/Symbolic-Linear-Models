@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from statsmodels.tsa.api import acf, pacf              # funciones de econometria
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
+from gplearn.genetic import SymbolicRegressor          # regresion simbolica
 
 
 # ---------------------------------------------------------------------------------- Feature Engineering -- #
@@ -201,6 +202,31 @@ def f_tsbs(p_data):
     -------
 
     """
-
-
     return 1
+
+
+def symbolic_regression(p_x, p_y):
+    """
+        Funcion para crear regresores no lineales
+
+        Parameters
+        ----------
+
+        p_x: pd.DataFrame
+            with regressors or predictor variables
+            p_x = data_features.iloc[0:30, 3:]
+
+        p_y: pd.DataFrame
+            with variable to predict
+            p_y = data_features.iloc[0:30, 1]
+    Returns
+    -------
+    score_gp: float
+        error of prediction
+    """
+    est_gp = SymbolicRegressor(function_set=['mul', 'div', 'sqrt', 'log'], stopping_criteria=0.3, metric='rmse',
+                               p_crossover=0.5, p_subtree_mutation=0.15, p_hoist_mutation=0.05,
+                               p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
+    est_gp.fit(p_x, p_y)                 # (con train)
+    score_gp = est_gp.score(p_x, p_y)    # (con test)
+    return score_gp
