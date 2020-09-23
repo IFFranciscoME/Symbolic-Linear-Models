@@ -9,7 +9,7 @@
 # -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
-
+import numpy as np
 import pandas as pd
 import functions as fn
 from data import m6e1
@@ -71,8 +71,10 @@ alphas = [1e-5, 1e-3, 1e-2, 1, 1e2, 1e3, 1e5]
 models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
                             p_y=data_features.iloc[:, 1],
                             p_alpha=alphas[1], p_iter=1e6)
-
+print(models)
 
 # models
 symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
 print(symbolic)
+
+

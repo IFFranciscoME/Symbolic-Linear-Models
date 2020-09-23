@@ -9,7 +9,7 @@
 # -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
-
+import gplearn as gpl
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
@@ -205,6 +205,11 @@ def f_tsbs(p_data):
     return 1
 
 
+def _rss(y, y_pred, w):
+    diffs = (y-y_pred)**2
+    return np.sum(diffs)
+
+
 def symbolic_regression(p_x, p_y):
     """
         Funcion para crear regresores no lineales
@@ -224,9 +229,12 @@ def symbolic_regression(p_x, p_y):
     score_gp: float
         error of prediction
     """
-    est_gp = SymbolicRegressor(function_set=['mul', 'div', 'sqrt', 'log'], stopping_criteria=0.3, metric='rmse',
+    rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
+    est_gp = SymbolicRegressor(function_set=['inv', 'mul', 'div', 'sqrt'],
+                               stopping_criteria=0.4, metric=rss,
                                p_crossover=0.5, p_subtree_mutation=0.15, p_hoist_mutation=0.05,
                                p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
     est_gp.fit(p_x, p_y)                 # (con train)
     score_gp = est_gp.score(p_x, p_y)    # (con test)
-    return score_gp
+    print(score_gp)
+    return est_gp._program
