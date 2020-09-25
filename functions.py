@@ -230,7 +230,7 @@ def symbolic_regression(p_x, p_y):
         error of prediction
     """
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    est_gp = SymbolicRegressor(function_set=['inv', 'mul', 'div', 'sqrt'],
+    est_gp = SymbolicRegressor(function_set=['inv', 'mul', 'div', 'sqrt'], feature_names=p_x.columns,
                                stopping_criteria=0.4, metric=rss,
                                p_crossover=0.5, p_subtree_mutation=0.15, p_hoist_mutation=0.05,
                                p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)

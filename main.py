@@ -9,11 +9,13 @@
 # -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
+import sympy as sp
 import numpy as np
 import pandas as pd
 import functions as fn
 from data import m6e1
 from visualizations import vs
+from graphviz import Digraph
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
 pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
@@ -73,8 +75,41 @@ models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
                             p_alpha=alphas[1], p_iter=1e6)
 print(models)
 
-# models
+# Resultado de la regresion simbolica
 symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
-print(symbolic)
+# convertir a str el resultado
+texto = symbolic.__str__()
+print(texto)
 
+# declaracion de operaciones simbolicas
+localss = {
+    'sub': lambda x, y: x - y,
+    'div': lambda x, y: x / y,
+    'mul': lambda x, y: x * y,
+    'add': lambda x, y: x + y,
+    'inv': lambda x: x**-1,
+    'pow': lambda x, y: x ** y
+}
 
+# este es un ejemplo de como declarar cada variable como simbolica
+ma_oi_6 = sp.Symbol('ma_oi_6')
+ma_ol_8 = sp.Symbol('ma_ol_8')
+ma_ol_4 = sp.Symbol('ma_ol_4')
+ma_ol_3 = sp.Symbol('ma_ol_3')
+ma_ol_2 = sp.Symbol('ma_ol_2')
+ma_ho_3 = sp.Symbol('ma_ho_3')
+ma_hl_6 = sp.Symbol('ma_hl_6')
+lag_oi_2 = sp.Symbol('lag_oi_2')
+lag_ol_4 = sp.Symbol('lag_ol_4')
+
+# sustituir una variable simbolica en la expresion
+valor = 1
+# tener un objeto tipo simbolico sympy
+simbolica = sp.sympify(texto, locals=localss, evaluate=True)
+# evaluar la variable con el valor que se desea (sustituir el valor en la variable)
+simbolica.subs(lag_ol_4, valor)
+
+# Pendientes
+# (1) Como leer la salida de SymbolicRegressor (YA)
+# (3) como automatizar el proceso de seleccion de parametro simbolico y ponerlo como feature (Ya casi :) )
+# (2) la salida como visualizarla en un plot utilizando graphviz
