@@ -15,7 +15,7 @@ import pandas as pd
 import functions as fn
 from data import m6e1
 from visualizations import vs
-from graphviz import Digraph
+# from graphviz import Digraph
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
 pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
@@ -54,6 +54,7 @@ data_features = fn.f_features(p_data=data)
 
 # muestra de los features
 data_features.head()
+print(type(data_features))
 
 # -- ---------------------------------------------------------------------------------- Feature analysis -- #
 
@@ -79,7 +80,6 @@ print(models)
 symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
 # convertir a str el resultado
 texto = symbolic.__str__()
-print(texto)
 
 # declaracion de operaciones simbolicas
 localss = {
@@ -87,28 +87,22 @@ localss = {
     'div': lambda x, y: x / y,
     'mul': lambda x, y: x * y,
     'add': lambda x, y: x + y,
-    'inv': lambda x: x**-1,
-    'pow': lambda x, y: x ** y
+    'inv': lambda x: x**(-1),
+    'sqrt': lambda x: x ** (1/2)
 }
 
 # este es un ejemplo de como declarar cada variable como simbolica
-ma_oi_6 = sp.Symbol('ma_oi_6')
-ma_ol_8 = sp.Symbol('ma_ol_8')
-ma_ol_4 = sp.Symbol('ma_ol_4')
-ma_ol_3 = sp.Symbol('ma_ol_3')
-ma_ol_2 = sp.Symbol('ma_ol_2')
-ma_ho_3 = sp.Symbol('ma_ho_3')
-ma_hl_6 = sp.Symbol('ma_hl_6')
-lag_oi_2 = sp.Symbol('lag_oi_2')
-lag_ol_4 = sp.Symbol('lag_ol_4')
 
 # sustituir una variable simbolica en la expresion
-valor = 1
 # tener un objeto tipo simbolico sympy
 simbolica = sp.sympify(texto, locals=localss, evaluate=True)
 # evaluar la variable con el valor que se desea (sustituir el valor en la variable)
-simbolica.subs(lag_ol_4, valor)
+data_features.eval("gplearn={}".format(simbolica), inplace=True)
 
+models2 = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
+                             p_y=data_features.iloc[:, 1],
+                             p_alpha=alphas[1], p_iter=1e6)
+print(models2)
 # Pendientes
 # (1) Como leer la salida de SymbolicRegressor (YA)
 # (3) como automatizar el proceso de seleccion de parametro simbolico y ponerlo como feature (Ya casi :) )
