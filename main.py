@@ -15,7 +15,7 @@ import pandas as pd
 import functions as fn
 from data import m6e1
 from visualizations import vs
-# from graphviz import Digraph
+
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
 pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
@@ -77,7 +77,7 @@ models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
 print(models)
 
 # Resultado de la regresion simbolica
-symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
+symbolic, dot = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
 # convertir a str el resultado
 texto = symbolic.__str__()
 

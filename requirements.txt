@@ -17,3 +17,6 @@ plotly==4.10.0
 scikit-learn==0.23.2
 requests==2.24.0
 gplearn==0.4.1
+sympy==1.1.1
+graphviz==0.14.1
+pydot==1.4.1
