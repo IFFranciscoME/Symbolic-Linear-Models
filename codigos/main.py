@@ -102,6 +102,7 @@ models2 = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
                              p_y=data_features.iloc[:, 1],
                              p_alpha=alphas[1], p_iter=1e6)
 print(models2)
+
 # Pendientes
 # (1) Como leer la salida de SymbolicRegressor (YA)
 # (3) como automatizar el proceso de seleccion de parametro simbolico y ponerlo como feature (Ya casi :) )
