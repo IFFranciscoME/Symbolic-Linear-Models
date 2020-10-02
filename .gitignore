@@ -6,7 +6,7 @@
 .idea/
 
 # Se incluyen en git
-# venv
+venv/
 # files/
 
 # --------------------------------- #
