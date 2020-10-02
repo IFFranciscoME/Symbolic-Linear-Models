@@ -7,13 +7,15 @@
 
 # Se incluyen en git
 venv/
-# files/
+
+# __pycache__
+codigos/__pycache__/
 
 # --------------------------------- #
 # --------------------------------- #
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+
 *.py[cod]
 *$py.class
 

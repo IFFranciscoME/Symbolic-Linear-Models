@@ -19,6 +19,7 @@ from gplearn.genetic import SymbolicRegressor          # regresion simbolica
 import gplearn as gpl
 import graphviz as graphviz
 
+
 # ---------------------------------------------------------------------------------- Feature Engineering -- #
 # --------------------------------------------------------------------------------------------------------- #
 
@@ -230,6 +231,10 @@ def symbolic_regression(p_x, p_y):
     score_gp: float
         error of prediction
     """
+
+    # semilla para reproducibilidad de resultados del gplearn
+    np.random.seed(123)
+
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
     est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'sqrt'], feature_names=p_x.columns,
                                stopping_criteria=500, metric=rss,
@@ -238,7 +243,7 @@ def symbolic_regression(p_x, p_y):
     est_gp.fit(p_x, p_y)                 # (con train)
     score_gp = est_gp.score(p_x, p_y)    # (con test)
     print(score_gp)
-    dot_data = est_gp._program.export_graphviz()
+    dot_data = est_gp._program.export_graphviz('codigos/imagenes')
     graph = graphviz.Source(dot_data)
     graph.render('tree.gv', view=True)
     return est_gp._program, graph
