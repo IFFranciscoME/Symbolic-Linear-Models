@@ -12,6 +12,7 @@
 
 import sympy as sp
 import pandas as pd
+import numpy as np
 import codigos.functions as fn
 from codigos.data import m6e1
 from codigos.visualizations import vs
@@ -76,7 +77,7 @@ models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
 print(models)
 
 # Resultado de la regresion simbolica
-symbolic, dot = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
+symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
 # convertir a str el resultado
 texto = symbolic.__str__()
 
@@ -86,13 +87,12 @@ localss = {
     'div': lambda x, y: x / y,
     'mul': lambda x, y: x * y,
     'add': lambda x, y: x + y,
-    'inv': lambda x: x**(-1),
-    'sqrt': lambda x: x ** (1/2)
+    'inv': lambda x: x**(-1)
 }
 
 # este es un ejemplo de como declarar cada variable como simbolica
-
 # sustituir una variable simbolica en la expresion
+
 # tener un objeto tipo simbolico sympy
 simbolica = sp.sympify(texto, locals=localss, evaluate=True)
 # evaluar la variable con el valor que se desea (sustituir el valor en la variable)

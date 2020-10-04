@@ -236,14 +236,14 @@ def symbolic_regression(p_x, p_y):
     np.random.seed(123)
 
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'sqrt'], feature_names=p_x.columns,
-                               stopping_criteria=500, metric=rss,
+    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div'], feature_names=p_x.columns,
+                               stopping_criteria=.1, metric=rss,
                                p_crossover=0.5, p_subtree_mutation=0.15, p_hoist_mutation=0.05,
                                p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
     est_gp.fit(p_x, p_y)                 # (con train)
     score_gp = est_gp.score(p_x, p_y)    # (con test)
     print(score_gp)
-    dot_data = est_gp._program.export_graphviz('codigos/imagenes')
-    graph = graphviz.Source(dot_data)
-    graph.render('tree.gv', view=True)
-    return est_gp._program, graph
+    #dot_data = est_gp._program.export_graphviz('codigos/imagenes')
+    #graph = graphviz.Source(dot_data)
+    #graph.render('tree.gv', view=True)
+    return est_gp._program
