@@ -6,10 +6,10 @@
 .idea/
 
 # Se incluyen en git
-# venv/
+venv/
 
 # __pycache__
-# codigos/__pycache__/
+codigos/__pycache__/
 
 # --------------------------------- #
 # --------------------------------- #
