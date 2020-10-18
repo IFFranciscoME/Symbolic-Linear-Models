@@ -17,7 +17,7 @@ from statsmodels.tsa.api import acf, pacf              # funciones de econometri
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
 from gplearn.genetic import SymbolicRegressor          # regresion simbolica
 import gplearn as gpl
-import graphviz as graphviz
+import graphviz
 
 
 # ---------------------------------------------------------------------------------- Feature Engineering -- #
@@ -233,17 +233,21 @@ def symbolic_regression(p_x, p_y):
     """
 
     # semilla para reproducibilidad de resultados del gplearn
-    np.random.seed(455)
+    # np.random.seed(455)
 
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div','abs','sin'], feature_names=p_x.columns,
-                               stopping_criteria=.1, metric=rss,
+    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'sin'],
+                               feature_names=p_x.columns,
+                               stopping_criteria=500, metric=rss,
                                p_crossover=0.5, p_subtree_mutation=0.15, p_hoist_mutation=0.05,
                                p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
-    est_gp.fit(p_x, p_y)                 # (con train)
-    score_gp = est_gp.score(p_x, p_y)    # (con test)
+
+    est_gp.fit(p_x, p_y)  # (con train)
+
+    score_gp = est_gp.score(p_x, p_y)  # (con test)
     print(score_gp)
-    dot_data = est_gp._program.export_graphviz('codigos/imagenes')
+    dot_data = est_gp._program.export_graphviz()
     graph = graphviz.Source(dot_data)
     graph.render('tree.gv', view=True)
+
     return est_gp._program

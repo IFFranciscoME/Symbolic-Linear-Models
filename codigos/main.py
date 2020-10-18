@@ -74,15 +74,20 @@ alphas = [1e-5, 1e-3, 1e-2, 1, 1e2, 1e3, 1e5]
 models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
                             p_y=data_features.iloc[:, 1],
                             p_alpha=alphas[1], p_iter=1e6)
-print(models)
 
-# Resultado de la regresion simbolica
+# -- ------------------------------------------------------------------------------- Features simbolicos -- #
+
+# semilla para siempre obtener el mismo resultado
+np.random.seed(123)
+
+# Generacion de un feature formado con variable simbolica
 symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
+
 # convertir a str el resultado
 texto = symbolic.__str__()
 
 # declaracion de operaciones simbolicas
-localss = {
+op_sim = {
     'sub': lambda x, y: x - y,
     'div': lambda x, y: x / y,
     'mul': lambda x, y: x * y,
@@ -92,18 +97,36 @@ localss = {
 
 # este es un ejemplo de como declarar cada variable como simbolica
 # sustituir una variable simbolica en la expresion
-
 # tener un objeto tipo simbolico sympy
-simbolica = sp.sympify(texto, locals=localss, evaluate=True)
-# evaluar la variable con el valor que se desea (sustituir el valor en la variable)
-data_features.eval("gplearn={}".format(simbolica), inplace=True)
 
+# expresion simbolica en formato de texto
+exp_sim = str(sp.sympify(texto, locals=op_sim, evaluate=True))
+
+# evaluar la variable con el valor que se desea para agregar resultado numerico de la
+# expresion simbolica en el cuadro de features
+data_features.eval("gplearn={}".format(exp_sim), inplace=True)
+
+# escribir nuevos features en un excel para proceso de ajuste de modelo en R
+data_features.to_csv('simbolic_features.csv')
+
+# reajustar modelos
 models2 = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
                              p_y=data_features.iloc[:, 1],
                              p_alpha=alphas[1], p_iter=1e6)
-print(models2)
 
-# Pendientes
-# (1) Como leer la salida de SymbolicRegressor (YA)
-# (3) como automatizar el proceso de seleccion de parametro simbolico y ponerlo como feature (Ya casi :) )
-# (2) la salida como visualizarla en un plot utilizando graphviz
+
+# -- PASOS a seguir
+# 1ero - Regresion simbolica para obtener regresores "Individuales", Hacer esto manualmente.
+# (Ingenieria de variables simbolicas a traves un proceso de separacion de componentes de una regresion
+# simbolica con gplearn).
+
+# Una prueba semi/manual en python con un modelo simple, ridge, lasso y elasticnet.
+
+# revisar como separar las subcomponentes del resultado de la regreion simbolica sistematicamente.
+
+# paralelizar proces de uso de gplearn para generar unos regresores muy buenos y correlacionados con
+# la variable a explicar.
+
+# 2do - Un muy buen proceso de ajuste de un modelo de Regresion lineal.
+
+# 3ero - Un muy buen proceso de ajuste de un modelo de Regresion.
