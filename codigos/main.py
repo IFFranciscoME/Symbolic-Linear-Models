@@ -106,10 +106,12 @@ exp_sim = str(sp.sympify(texto, locals=op_sim, evaluate=True))
 # expresion simbolica en el cuadro de features
 # data_features.eval("gplearn={}".format(exp_sim), inplace=True)
 
-data_features["gp1"] = (data_features["lag_ol_4"]-data_features["ma_ol_3"]) / data_features["lag_ho_4"]
-data_features["gp2"] = data_features["lag_ho_7"]*data_features["ma_hl_5"]*data_features["ma_oi_5"]*data_features["ma_ol_3"]
-data_features["gp3"] = (data_features["lag_ol_5"]+data_features["ma_ho_6"]-data_features["ma_oi_6"]) * data_features["ma_hl_5"]
-data_features["gp4"] = (data_features["ma_ho_6"]-data_features["ma_oi_9"]) / data_features["lag_ol_5"]
+data_features["gp1"] = data_features["lag_hl_5"]*data_features["lag_ho_3"]
+data_features["gp2"] = np.sin(data_features["lag_hl_4"])
+data_features["gp3"] = data_features["lag_ho_7"]*data_features["ma_ol_4"]/data_features["lag_oi_8ma_oi_9"]
+data_features["gp4"] = data_features["lag_ho_7"]*data_features["lag_oi_1ma_oi_2"]/data_features["lag_oi_8ma_oi_9"]
+data_features["gp5"] = data_features["lag_ho_7"]*data_features["lag_oi_8ma_oi_9"]*data_features["ma_ho_2"]**2
+data_features["gp5"] = data_features["lag_ho_7"]*data_features["ma_ho_3"]
 
 s1 = "(lag_ol_4 - ma_ol_3)/(lag_ho_4)"
 s2 = data_features["lag_ho_7"]*data_features["ma_hl_5"]*data_features["ma_oi_5"]*data_features["ma_ol_3"]

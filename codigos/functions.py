@@ -67,17 +67,17 @@ def f_features(p_data):
     # ciclo para calcular N features con logica de "Ventanas de tamaño n"
     for n in range(0, max_n):
     
-        # resago n de oi
+        # rezago n de oi
         data['lag_oi_' + str(n + 1)] = data['openinterest'].shift(n + 1)
     
-        # resago n de ol
+        # rezago n de ol
         data['lag_ol_' + str(n + 1)] = data['ol'].shift(n + 1)
     
-        # resago n de ho
+        # rezago n de ho
         data['lag_ho_' + str(n + 1)] = data['ho'].shift(n + 1)
     
-        # resago n de hl
-        data['lag_ho_' + str(n + 1)] = data['hl'].shift(n + 1)
+        # rezago n de hl
+        data['lag_hl_' + str(n + 1)] = data['hl'].shift(n + 1)
     
         # promedio movil de open-high de ventana n
         data['ma_oi_' + str(n + 2)] = data['openinterest'].rolling(n + 2).mean()
@@ -90,7 +90,15 @@ def f_features(p_data):
     
         # promedio movil de ventana n
         data['ma_hl_' + str(n + 2)] = data['hl'].rolling(n + 2).mean()
-    
+
+        list_hadamard=[data['lag_oi_' + str(n + 1)], data['lag_ol_' + str(n + 1)],
+                       data['lag_ho_' + str(n + 1)], data['lag_hl_' + str(n + 1)]]
+        for x in list_hadamard:
+            data['lag_oi_' + str(n + 1)+'ma_oi_' + str(n + 2)] = x*data['ma_oi_' + str(n + 2)]
+            data['lag_oi_' + str(n + 1)+'ma_ol_' + str(n + 2)] = x*data['ma_ol_' + str(n + 2)]
+            data['lag_oi_' + str(n + 1)+'ma_ho_' + str(n + 2)] = x*data['ma_ho_' + str(n + 2)]
+            data['lag_oi_' + str(n + 1)+'ma_hl_' + str(n + 2)] = x*data['ma_hl_' + str(n + 2)]
+
     # asignar timestamp como index
     data.index = pd.to_datetime(data.index)
     # quitar columnas no necesarias para modelos de ML
@@ -239,15 +247,15 @@ def symbolic_regression(p_x, p_y):
     est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'sin'],
                                feature_names=p_x.columns,
                                stopping_criteria=.1, metric=rss,
-                               p_crossover=0.5, p_subtree_mutation=0.1, p_hoist_mutation=0.1,
+                               p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
                                p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
 
     est_gp.fit(p_x, p_y)  # (con train)
 
     score_gp = est_gp.score(p_x, p_y)  # (con test)
     print(score_gp)
-    dot_data = est_gp._program.export_graphviz()
-    graph = graphviz.Source(dot_data)
-    graph.render('tree.gv', view=True)
+    #dot_data = est_gp._program.export_graphviz()
+    #graph = graphviz.Source(dot_data)
+    #graph.render('tree.gv', view=True)
 
     return est_gp._program
