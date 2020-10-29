@@ -248,7 +248,8 @@ def symbolic_regression(p_x, p_y):
                                feature_names=p_x.columns,
                                stopping_criteria=.1, metric=rss,
                                p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
-                               p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1, warm_start=True)
+                               p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1,
+                               warm_start=True)
 
     est_gp.fit(p_x, p_y)  # (con train)
 
