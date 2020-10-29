@@ -240,11 +240,8 @@ def symbolic_regression(p_x, p_y):
         error of prediction
     """
 
-    # semilla para reproducibilidad de resultados del gplearn
-    # np.random.seed(455)
-
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'sin'],
+    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs'],
                                feature_names=p_x.columns,
                                stopping_criteria=.1, metric=rss,
                                p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,

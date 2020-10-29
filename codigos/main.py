@@ -105,10 +105,10 @@ data_features["gp4"] = data_features["lag_ho_7"]*data_features["lag_oi_1ma_oi_2"
 data_features["gp5"] = data_features["lag_ho_7"]*data_features["lag_oi_8ma_oi_9"]*data_features["ma_ho_2"]**2
 data_features["gp5"] = data_features["lag_ho_7"]*data_features["ma_ho_3"]
 
-s1 = "(lag_ol_4 - ma_ol_3)/(lag_ho_4)"
-s2 = data_features["lag_ho_7"]*data_features["ma_hl_5"]*data_features["ma_oi_5"]*data_features["ma_ol_3"]
-s3 = (data_features["lag_ol_5"]+data_features["ma_ho_6"]-data_features["ma_oi_6"]) * data_features["ma_hl_5"]
-s4 = (data_features["ma_ho_6"]-data_features["ma_oi_9"]) / data_features["lag_ol_5"]
+# s1 = "(lag_ol_4 - ma_ol_3)/(lag_ho_4)"
+# s2 = data_features["lag_ho_7"]*data_features["ma_hl_5"]*data_features["ma_oi_5"]*data_features["ma_ol_3"]
+# s3 = (data_features["lag_ol_5"]+data_features["ma_ho_6"]-data_features["ma_oi_6"]) * data_features["ma_hl_5"]
+# s4 = (data_features["ma_ho_6"]-data_features["ma_oi_9"]) / data_features["lag_ol_5"]
 
 # escribir nuevos features en un excel para proceso de ajuste de modelo en R
 data_features.to_csv('codigos/files/simbolic_features.csv')
