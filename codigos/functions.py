@@ -1,7 +1,7 @@
 
 """
 # -- --------------------------------------------------------------------------------------------------- -- #
-# -- project: Multivariate Linear Symbolic Regression with Regularization using Elastic Net              -- #
+# -- project: Multivariate Linear Regression with Symbolic Regressors and L1L2 Regularization            -- #
 # -- for future prices prediction, the case for UsdMxn                                                   -- #
 # -- script: functions.py : python script with general functions                                         -- #
 # -- author: IFFranciscoME                                                                               -- #
@@ -252,10 +252,10 @@ def symbolic_regression(p_x, p_y):
 
     est_gp.fit(p_x, p_y)  # (con train)
 
-    score_gp = est_gp.score(p_x, p_y)  # (con test)
-    print(score_gp)
-    #dot_data = est_gp._program.export_graphviz()
-    #graph = graphviz.Source(dot_data)
-    #graph.render('tree.gv', view=True)
+    # score_gp = est_gp.score(p_x, p_y)  # (con test)
+    # print(score_gp)
+    # dot_data = est_gp._program.export_graphviz()
+    # graph = graphviz.Source(dot_data)
+    # graph.render('tree.gv', view=True)
 
     return est_gp._program

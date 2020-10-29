@@ -1,7 +1,7 @@
 
 """
 # -- --------------------------------------------------------------------------------------------------- -- #
-# -- project: Multivariate Linear Symbolic Regression with Regularization using Elastic Net              -- #
+# -- project: Multivariate Linear Regression with Symbolic Regressors and L1L2 Regularization            -- #
 # -- for future prices prediction, the case for UsdMxn                                                   -- #
 # -- script: visualizations.py : python script with data visualization functions                         -- #
 # -- author: IFFranciscoME                                                                               -- #
