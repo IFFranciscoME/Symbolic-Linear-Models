@@ -8,8 +8,6 @@
 # -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 
-
-
 # este es un ejemplo de como declarar cada variable como simbolica
 # sustituir una variable simbolica en la expresion
 # tener un objeto tipo simbolico sympy
@@ -44,3 +42,14 @@
 
 # Otro experimento es hacer el producto hadamard con features en el mismo punto del tiempo (periodo)
 # ej: lag_hl_1 (hadamard) ma_hl_1
+
+# -- jUEVES 29.10
+# IDEA A FUTURO: UN BOSQUE DE ARBOLES Y CADA ARBOL ES UN CONJUNTO DE OPERACIONES SIMBOLICAS A LOS FEATURES
+DE ENTRADA.
+
+- Hacer varios casos para comparar
+- Primer paso: tomar los features originales, introducirlos en regresion simbolica, observar las operaciones
+que resultan de la regresion simbolica, extraer a mano las operaciones, hacer las operaciones con los
+features originales, correr regresion lineal clasica con los features originales y con los features nuevos
+(transformaciones resultantes de las operaciones utilizadas en regresion simbolica).
+

@@ -13,23 +13,15 @@
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from statsmodels.tsa.api import acf, pacf              # funciones de econometria
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
 from gplearn.genetic import SymbolicRegressor          # regresion simbolica
 import gplearn as gpl
-import graphviz
 
 
 # ---------------------------------------------------------------------------------- Feature Engineering -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def f_features(p_data):
-    """
-    Parameters
-    ----------
-    p_data
-
-    """
+def f_features(p_data, p_nmax):
 
     # reasignar datos
     data = p_data.copy()
@@ -48,35 +40,20 @@ def f_features(p_data):
     
     # clase a predecir
     data['co_d'] = [1 if i > 0 else 0 for i in list(data['co'])]
-    
-    # funciones de ACF y PACF para determinar ancho de ventana historica
-    data_acf = acf(data['co'].dropna(), nlags=12, fft=True)
-    data_pac = pacf(data['co'].dropna(), nlags=12)
-    sig = round(1.96/np.sqrt(len(data['co'])), 4)
-    
-    # componentes AR y MA
-    maxs = list(set(list(np.where((data_pac > sig) | (data_pac < -sig))[0]) +
-                    list(np.where((data_acf > sig) | (data_acf < -sig))[0])))
-    # encontrar la componente maxima como indicativo de informacion historica autorelacionada
-    max_n = maxs[np.argmax(maxs)]
-    
-    # condicion arbitraria: 5 resagos minimos para calcular variables moviles
-    if max_n <= 2:
-        max_n = 5
-    
+
     # ciclo para calcular N features con logica de "Ventanas de tamaño n"
-    for n in range(0, max_n):
+    for n in range(0, p_nmax):
     
-        # rezago n de oi
+        # rezago n de Open Interest
         data['lag_oi_' + str(n + 1)] = data['openinterest'].shift(n + 1)
     
-        # rezago n de ol
+        # rezago n de Open - Low
         data['lag_ol_' + str(n + 1)] = data['ol'].shift(n + 1)
     
-        # rezago n de ho
+        # rezago n de High - Open
         data['lag_ho_' + str(n + 1)] = data['ho'].shift(n + 1)
     
-        # rezago n de hl
+        # rezago n de High - Low
         data['lag_hl_' + str(n + 1)] = data['hl'].shift(n + 1)
     
         # promedio movil de open-high de ventana n
@@ -91,13 +68,15 @@ def f_features(p_data):
         # promedio movil de ventana n
         data['ma_hl_' + str(n + 2)] = data['hl'].rolling(n + 2).mean()
 
-        list_hadamard=[data['lag_oi_' + str(n + 1)], data['lag_ol_' + str(n + 1)],
-                       data['lag_ho_' + str(n + 1)], data['lag_hl_' + str(n + 1)]]
+        # hadamard product of previously generated features
+        list_hadamard = [data['lag_oi_' + str(n + 1)], data['lag_ol_' + str(n + 1)],
+                         data['lag_ho_' + str(n + 1)], data['lag_hl_' + str(n + 1)]]
+
         for x in list_hadamard:
-            data['lag_oi_' + str(n + 1)+'ma_oi_' + str(n + 2)] = x*data['ma_oi_' + str(n + 2)]
-            data['lag_oi_' + str(n + 1)+'ma_ol_' + str(n + 2)] = x*data['ma_ol_' + str(n + 2)]
-            data['lag_oi_' + str(n + 1)+'ma_ho_' + str(n + 2)] = x*data['ma_ho_' + str(n + 2)]
-            data['lag_oi_' + str(n + 1)+'ma_hl_' + str(n + 2)] = x*data['ma_hl_' + str(n + 2)]
+            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_oi_' + str(n + 2)] = x*data['ma_oi_' + str(n + 2)]
+            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_ol_' + str(n + 2)] = x*data['ma_ol_' + str(n + 2)]
+            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_ho_' + str(n + 2)] = x*data['ma_ho_' + str(n + 2)]
+            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_hl_' + str(n + 2)] = x*data['ma_hl_' + str(n + 2)]
 
     # asignar timestamp como index
     data.index = pd.to_datetime(data.index)
@@ -124,10 +103,48 @@ def f_features(p_data):
     return r_features
 
 
-# --------------------------------------------------------- MODEL: Multivariate Linear Regression Models -- #
+# ---------------------------------------------------------- MODEL: Multivariate Linear Regression Model -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def mult_regression(p_x, p_y, p_alpha, p_iter):
+def mult_regression(p_x, p_y):
+    """
+    Funcion para ajustar varios modelos lineales
+
+    Parameters
+    ----------
+
+    p_x: pd.DataFrame
+        with regressors or predictor variables
+        p_x = data_features.iloc[0:30, 3:]
+
+    p_y: pd.DataFrame
+        with variable to predict
+        p_y = data_features.iloc[0:30, 1]
+
+    Returns
+    -------
+    r_models: dict
+        Diccionario con modelos ajustados
+
+    """
+
+    # Fit LINEAR regression
+    linreg = LinearRegression(normalize=False, fit_intercept=False)
+    linreg.fit(p_x, p_y)
+    y_p_linear = linreg.predict(p_x)
+
+    # Return the result of the model
+    r_models = {'linear': {'rss': sum((y_p_linear - p_y) ** 2),
+                           'intercept': linreg.intercept_,
+                           'coef': linreg.coef_}}
+
+    return r_models
+
+
+# -------------------------------- MODEL: Multivariate Linear Regression Models with L1L2 regularization -- #
+# --------------------------------------------------------------------------------------------------------- #
+
+def mult_reg_rl(p_x, p_y, p_alpha, p_iter):
     """
     Funcion para ajustar varios modelos lineales
 
@@ -157,11 +174,6 @@ def mult_regression(p_x, p_y, p_alpha, p_iter):
 
     """
 
-    # Fit LINEAR regression
-    linreg = LinearRegression(normalize=False, fit_intercept=False)
-    linreg.fit(p_x, p_y)
-    y_p_linear = linreg.predict(p_x)
-
     # Fit RIDGE regression
     ridgereg = Ridge(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
     ridgereg.fit(p_x, p_y)
@@ -177,11 +189,10 @@ def mult_regression(p_x, p_y, p_alpha, p_iter):
     enetreg.fit(p_x, p_y)
     y_p_enet = enetreg.predict(p_x)
 
+    # RSS = residual sum of squares
+
     # Return the result of the model
-    r_models = {'linear': {'rss': sum((y_p_linear - p_y) ** 2),
-                           'intercept': linreg.intercept_,
-                           'coef': linreg.coef_},
-                'rige': {'rss': sum((y_p_ridge - p_y) ** 2),
+    r_models = {'rige': {'rss': sum((y_p_ridge - p_y) ** 2),
                          'intercept': ridgereg.intercept_,
                          'coef': ridgereg.coef_},
                 'lasso': {'rss': sum((y_p_lasso - p_y) ** 2),
@@ -193,26 +204,6 @@ def mult_regression(p_x, p_y, p_alpha, p_iter):
                 }
 
     return r_models
-
-
-# ------------------------------------------------------------------------------- TimeSeries Block Split -- #
-# --------------------------------------------------------------------------------------------------------- #
-
-def f_tsbs(p_data):
-    """
-    TimeSeries Block Split tecnique for crossvalidation a time series based model
-
-    Parameters
-    ----------
-    p_data: pd.DataFrame
-        con los datos a dividir
-        p_data = data_features
-
-    Returns
-    -------
-
-    """
-    return 1
 
 
 def _rss(y, y_pred, w):

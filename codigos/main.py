@@ -27,12 +27,12 @@ pd.set_option('display.expand_frame_repr', False)         # visualizar todas las
 # m6e : Micro Eur/Usd Future: https://www.cmegroup.com/trading/fx/e-micros/e-micro-euro.html
 # obtained with Quandl / Chris free data set. Gathers the data from webscraping cmegroup's future data
 data = m6e1.tail(160)
-data.tail()
+# data.tail()
 
 # -- ------------------------------------------------------------------------- Exploratory Data Analysis -- #
 
 # Description table
-data.describe()
+# data.describe()
 
 # OHLC plot
 p_theme = {'color_1': '#ABABAB', 'color_2': '#ABABAB', 'color_3': '#ABABAB', 'font_color_1': '#ABABAB',
@@ -50,30 +50,32 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
 # ingenieria de caracteristicas con variable endogena
-data_features = fn.f_features(p_data=data)
+features = fn.f_features(p_data=data, p_nmax=30)
 
 # muestra de los features
-data_features.head()
-print(type(data_features))
+# features.head()
 
 # -- ---------------------------------------------------------------------------------- Feature analysis -- #
 
 # matriz de correlacion
-cor_mat = data_features.iloc[:, 1:-1].corr()
+cor_mat = features.iloc[:, 1:].corr()
 
-# -- ---------------------------------------------------------------------------- TimeSeries Block Split -- #
+# -- ---------------------------------------------------------------------------------------- Models fit -- #
 
-# opciones para definir los bloques
-split = {'a': {'1sem'}, 'b': {'2sem'}, 'c': {'3sem'}, 'd': {'4sem'}, 'model': {'changepoint'}}
+# Multple linear regression model 
+lm_model = fn.mult_regression(p_x=features.iloc[:, 3:-1],
+                              p_y=features.iloc[:, 1])
 
-# funcion para definir bloques
-bloques = fn.f_tsbs(p_data=data_features)
+# RSS of the model with all the variables
+# lm_model['linear']['rss']
 
-# -- ----------------------------------------------------------------------------------------- Model fit -- #
-alphas = [1e-5, 1e-3, 1e-2, 1, 1e2, 1e3, 1e5]
-models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
-                            p_y=data_features.iloc[:, 1],
-                            p_alpha=alphas[1], p_iter=1e6)
+# # Multple linear regression model with L1 and L2 regularization
+# alphas = [1e-5, 1e-3, 1e-2, 1, 1e2, 1e3, 1e5]
+# reg_lm_model = fn.mult_reg_rl(p_x=features.iloc[:, 3:-1], p_iter=1e6,
+#                               p_y=features.iloc[:, 1], p_alpha=alphas[1])
+#
+# # RSS of the model with all the variables and regularization
+# reg_lm_model['elasticnet']['rss']
 
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
@@ -81,39 +83,34 @@ models = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
 np.random.seed(455)
 
 # Generacion de un feature formado con variable simbolica
-symbolic = fn.symbolic_regression(p_x=data_features.iloc[:, 3:-1], p_y=data_features.iloc[:, 1])
+symbolic = fn.symbolic_regression(p_x=features.iloc[:, 3:-1], p_y=features.iloc[:, 1])
 
 # convertir a str el resultado
 texto = symbolic.__str__()
 
 # declaracion de operaciones simbolicas
-op_sim = {
-    'sub': lambda x, y: x - y,
-    'div': lambda x, y: x / y,
-    'mul': lambda x, y: x * y,
-    'add': lambda x, y: x + y,
-    'inv': lambda x: x**(-1)
-}
+op_sim = {'sub': lambda x, y: x - y,
+          'div': lambda x, y: x / y,
+          'mul': lambda x, y: x * y,
+          'add': lambda x, y: x + y,
+          'inv': lambda x: x**(-1)}
 
 # expresion simbolica en formato de texto
 exp_sim = str(sp.sympify(texto, locals=op_sim, evaluate=True))
 
-data_features["gp1"] = data_features["lag_hl_5"]*data_features["lag_ho_3"]
-data_features["gp2"] = np.sin(data_features["lag_hl_4"])
-data_features["gp3"] = data_features["lag_ho_7"]*data_features["ma_ol_4"]/data_features["lag_oi_8ma_oi_9"]
-data_features["gp4"] = data_features["lag_ho_7"]*data_features["lag_oi_1ma_oi_2"]/data_features["lag_oi_8ma_oi_9"]
-data_features["gp5"] = data_features["lag_ho_7"]*data_features["lag_oi_8ma_oi_9"]*data_features["ma_ho_2"]**2
-data_features["gp5"] = data_features["lag_ho_7"]*data_features["ma_ho_3"]
-
-# s1 = "(lag_ol_4 - ma_ol_3)/(lag_ho_4)"
-# s2 = data_features["lag_ho_7"]*data_features["ma_hl_5"]*data_features["ma_oi_5"]*data_features["ma_ol_3"]
-# s3 = (data_features["lag_ol_5"]+data_features["ma_ho_6"]-data_features["ma_oi_6"]) * data_features["ma_hl_5"]
-# s4 = (data_features["ma_ho_6"]-data_features["ma_oi_9"]) / data_features["lag_ol_5"]
+features["gp1"] = features["lag_hl_5"]*features["lag_ho_3"]
+features["gp2"] = np.sin(features["lag_hl_4"])
+features["gp3"] = features["lag_ho_7"]*features["ma_ol_4"]/features["had_lag_oi_8_ma_oi_9"]
+features["gp4"] = features["lag_ho_7"]*features["had_lag_oi_1_ma_oi_2"]/features["had_lag_oi_8_ma_oi_9"]
+features["gp5"] = features["lag_ho_7"]*features["had_lag_oi_8_ma_oi_9"]*features["ma_ho_2"]**2
+features["gp5"] = features["lag_ho_7"]*features["ma_ho_3"]
 
 # escribir nuevos features en un excel para proceso de ajuste de modelo en R
-data_features.to_csv('codigos/files/simbolic_features.csv')
+# features.to_csv('codigos/files/simbolic_features.csv')
 
-# reajustar modelos
-models2 = fn.mult_regression(p_x=data_features.iloc[:, 3:-1],
-                             p_y=data_features.iloc[:, 1],
-                             p_alpha=alphas[1], p_iter=1e6)
+# Multple linear regression model
+lm_model_s = fn.mult_regression(p_x=features.iloc[:, 3:-1], p_y=features.iloc[:, 1])
+# lm_model_s['linear']['rss']
+
+# matriz de correlacion
+# cor_mat_s = features.iloc[:, 1:].corr()
