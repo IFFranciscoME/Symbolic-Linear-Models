@@ -83,7 +83,7 @@ lm_model = fn.mult_regression(p_x=features.iloc[:, 3:-1],
 np.random.seed(455)
 
 # Generacion de un feature formado con variable simbolica
-symbolic = fn.symbolic_regression(p_x=features.iloc[:, 3:-1], p_y=features.iloc[:, 1])
+symbolic = fn.symbolic_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 
 # convertir a str el resultado
 texto = symbolic.__str__()
@@ -109,8 +109,8 @@ features["gp5"] = features["lag_ho_7"]*features["ma_ho_3"]
 # features.to_csv('codigos/files/simbolic_features.csv')
 
 # Multple linear regression model
-lm_model_s = fn.mult_regression(p_x=features.iloc[:, 3:-1], p_y=features.iloc[:, 1])
-# lm_model_s['linear']['rss']
+lm_model_s = fn.mult_regression(p_x=features.iloc[:, 364:368], p_y=features.iloc[:, 1])
+lm_model_s['linear']['rss']
 
 # matriz de correlacion
 # cor_mat_s = features.iloc[:, 1:].corr()

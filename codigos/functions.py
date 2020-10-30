@@ -135,6 +135,8 @@ def mult_regression(p_x, p_y):
 
     # Return the result of the model
     r_models = {'linear': {'rss': sum((y_p_linear - p_y) ** 2),
+                           'predict': y_p_linear,
+                           'model': linreg,
                            'intercept': linreg.intercept_,
                            'coef': linreg.coef_}}
 
@@ -193,12 +195,18 @@ def mult_reg_rl(p_x, p_y, p_alpha, p_iter):
 
     # Return the result of the model
     r_models = {'rige': {'rss': sum((y_p_ridge - p_y) ** 2),
+                         'predict': y_p_ridge,
+                         'model': ridgereg,
                          'intercept': ridgereg.intercept_,
                          'coef': ridgereg.coef_},
                 'lasso': {'rss': sum((y_p_lasso - p_y) ** 2),
+                          'predict': y_p_lasso,
+                          'model': lassoreg,
                           'intercept': lassoreg.intercept_,
                           'coef': lassoreg.coef_},
                 'elasticnet': {'rss': sum((y_p_enet - p_y) ** 2),
+                               'predict': y_p_enet,
+                               'model': enetreg,
                                'intercept': enetreg.intercept_,
                                'coef': enetreg.coef_}
                 }
