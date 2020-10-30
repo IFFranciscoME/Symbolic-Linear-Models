@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
-from gplearn.genetic import SymbolicRegressor          # regresion simbolica
+from gplearn.genetic import SymbolicRegressor, SymbolicTransformer          # regresion simbolica
 import gplearn as gpl
 
 
@@ -132,21 +132,23 @@ def mult_regression(p_x, p_y):
     linreg = LinearRegression(normalize=False, fit_intercept=False)
     linreg.fit(p_x, p_y)
     y_p_linear = linreg.predict(p_x)
+    y_p_score = linreg.score(p_x, p_y)
 
     # Return the result of the model
-    r_models = {'linear': {'rss': sum((y_p_linear - p_y) ** 2),
-                           'predict': y_p_linear,
-                           'model': linreg,
-                           'intercept': linreg.intercept_,
-                           'coef': linreg.coef_}}
+    linear_model = {'rss': np.round(sum((y_p_linear - p_y) ** 2), 4),
+                    'predict': y_p_linear,
+                    'model': linreg,
+                    'intercept': linreg.intercept_,
+                    'coef': linreg.coef_,
+                    'score': np.round(y_p_score, 4)}
 
-    return r_models
+    return linear_model
 
 
 # -------------------------------- MODEL: Multivariate Linear Regression Models with L1L2 regularization -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def mult_reg_rl(p_x, p_y, p_alpha, p_iter):
+def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
     """
     Funcion para ajustar varios modelos lineales
 
@@ -214,45 +216,46 @@ def mult_reg_rl(p_x, p_y, p_alpha, p_iter):
     return r_models
 
 
-def _rss(y, y_pred, w):
-    diffs = (y-y_pred)**2
-    return np.sum(diffs)
+# ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
+# --------------------------------------------------------------------------------------------------------- #
 
-
-def symbolic_regression(p_x, p_y):
+def symbolic_features(p_x, p_y):
     """
-        Funcion para crear regresores no lineales
+    Funcion para crear regresores no lineales
 
-        Parameters
-        ----------
+    Parameters
+    ----------
+    p_x: pd.DataFrame
+        with regressors or predictor variables
+        p_x = data_features.iloc[0:30, 3:]
 
-        p_x: pd.DataFrame
-            with regressors or predictor variables
-            p_x = data_features.iloc[0:30, 3:]
+    p_y: pd.DataFrame
+        with variable to predict
+        p_y = data_features.iloc[0:30, 1]
 
-        p_y: pd.DataFrame
-            with variable to predict
-            p_y = data_features.iloc[0:30, 1]
     Returns
     -------
     score_gp: float
         error of prediction
+
     """
 
+    # -- metric to measure performance
+    def _rss(y, y_pred, w):
+        diffs = (y - y_pred) ** 2
+        return np.sum(diffs)
+
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs'],
-                               feature_names=p_x.columns,
-                               stopping_criteria=.1, metric=rss,
-                               p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
-                               p_point_mutation=0.3, verbose=1, random_state=None, n_jobs=-1,
-                               warm_start=True)
 
-    est_gp.fit(p_x, p_y)  # (con train)
+    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'],
+                                population_size=2000,
+                                feature_names=p_x.columns, stopping_criteria=.1, metric=rss,
+                                p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
+                                p_point_mutation=0.3, verbose=0, random_state=None, n_jobs=4,
+                                warm_start=True)
 
-    # score_gp = est_gp.score(p_x, p_y)  # (con test)
-    # print(score_gp)
-    # dot_data = est_gp._program.export_graphviz()
-    # graph = graphviz.Source(dot_data)
-    # graph.render('tree.gv', view=True)
+    model_fit = model.fit_transform(p_x, p_y)
+    model_params = model.get_params()
+    results = {'fit': model_fit, 'params': model_params, 'model': model}
 
-    return est_gp._program
+    return results

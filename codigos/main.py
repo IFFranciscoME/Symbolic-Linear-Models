@@ -10,7 +10,6 @@
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
 
-import sympy as sp
 import pandas as pd
 import numpy as np
 import codigos.functions as fn
@@ -50,7 +49,7 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
 # ingenieria de caracteristicas con variable endogena
-features = fn.f_features(p_data=data, p_nmax=30)
+features = fn.f_features(p_data=data, p_nmax=5)
 
 # muestra de los features
 # features.head()
@@ -63,19 +62,12 @@ cor_mat = features.iloc[:, 1:].corr()
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 
 # Multple linear regression model 
-lm_model = fn.mult_regression(p_x=features.iloc[:, 3:-1],
-                              p_y=features.iloc[:, 1])
+lm_model = fn.mult_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 
 # RSS of the model with all the variables
-# lm_model['linear']['rss']
-
-# # Multple linear regression model with L1 and L2 regularization
-# alphas = [1e-5, 1e-3, 1e-2, 1, 1e2, 1e3, 1e5]
-# reg_lm_model = fn.mult_reg_rl(p_x=features.iloc[:, 3:-1], p_iter=1e6,
-#                               p_y=features.iloc[:, 1], p_alpha=alphas[1])
-#
-# # RSS of the model with all the variables and regularization
-# reg_lm_model['elasticnet']['rss']
+print('Modelo Lineal 1: rss: ', lm_model['rss'])
+# R^2 of the model
+print('Modelo Lineal 1: score: ', lm_model['score'])
 
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
@@ -83,34 +75,17 @@ lm_model = fn.mult_regression(p_x=features.iloc[:, 3:-1],
 np.random.seed(455)
 
 # Generacion de un feature formado con variable simbolica
-symbolic = fn.symbolic_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
+symbolic = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 
-# convertir a str el resultado
-texto = symbolic.__str__()
+# -- Transformer -- #
+nuevos_features = pd.concat([features, pd.DataFrame(symbolic['fit'])], axis=1)
 
-# declaracion de operaciones simbolicas
-op_sim = {'sub': lambda x, y: x - y,
-          'div': lambda x, y: x / y,
-          'mul': lambda x, y: x * y,
-          'add': lambda x, y: x + y,
-          'inv': lambda x: x**(-1)}
-
-# expresion simbolica en formato de texto
-exp_sim = str(sp.sympify(texto, locals=op_sim, evaluate=True))
-
-features["gp1"] = features["lag_hl_5"]*features["lag_ho_3"]
-features["gp2"] = np.sin(features["lag_hl_4"])
-features["gp3"] = features["lag_ho_7"]*features["ma_ol_4"]/features["had_lag_oi_8_ma_oi_9"]
-features["gp4"] = features["lag_ho_7"]*features["had_lag_oi_1_ma_oi_2"]/features["had_lag_oi_8_ma_oi_9"]
-features["gp5"] = features["lag_ho_7"]*features["had_lag_oi_8_ma_oi_9"]*features["ma_ho_2"]**2
-features["gp5"] = features["lag_ho_7"]*features["ma_ho_3"]
-
-# escribir nuevos features en un excel para proceso de ajuste de modelo en R
-# features.to_csv('codigos/files/simbolic_features.csv')
+# -- ---------------------------------------------------------------------------------------- Models fit -- #
 
 # Multple linear regression model
-lm_model_s = fn.mult_regression(p_x=features.iloc[:, 364:368], p_y=features.iloc[:, 1])
-lm_model_s['linear']['rss']
+lm_model_s = fn.mult_regression(p_x=nuevos_features.iloc[:, 3:], p_y=nuevos_features.iloc[:, 1])
 
-# matriz de correlacion
-# cor_mat_s = features.iloc[:, 1:].corr()
+# RSS of the model with all the variables
+print('Modelo Lineal 2: rss: ', lm_model_s['rss'])
+# R^2 of the model
+print('Modelo Lineal 2: score: ', lm_model_s['score'])
