@@ -31,13 +31,13 @@ def f_features(p_data, p_nmax):
 
     # pips descontados alcistas
     data['ho'] = (data['high'] - data['open'])*10000
-    
+
     # pips descontados bajistas
     data['ol'] = (data['open'] - data['low'])*10000
-    
+
     # pips descontados en total (medida de volatilidad)
     data['hl'] = (data['high'] - data['low'])*10000
-    
+
     # clase a predecir
     data['co_d'] = [1 if i > 0 else 0 for i in list(data['co'])]
 
@@ -248,10 +248,13 @@ def symbolic_features(p_x, p_y):
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
 
     model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'],
-                                population_size=2000,
-                                feature_names=p_x.columns, stopping_criteria=.1, metric=rss,
+                                population_size=5000, hall_of_fame=100, n_components=20,
+                                generations=20, tournament_size=20,  stopping_criteria=.05,
+                                const_range=None, init_method='half and half', init_depth=(4, 12),
+                                metric='pearson', parsimony_coefficient=0.001,
                                 p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
-                                p_point_mutation=0.3, verbose=0, random_state=None, n_jobs=4,
+                                p_point_mutation=0.3,
+                                verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
                                 warm_start=True)
 
     model_fit = model.fit_transform(p_x, p_y)
