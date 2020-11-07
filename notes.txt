@@ -53,3 +53,78 @@ que resultan de la regresion simbolica, extraer a mano las operaciones, hacer la
 features originales, correr regresion lineal clasica con los features originales y con los features nuevos
 (transformaciones resultantes de las operaciones utilizadas en regresion simbolica).
 
+RUTAS HEURISTICAS V0.1
+
+"ramped half and half"
+
+- Profundidad inicial, con el termino init_depth, para la poblacion inicial (arbol inicial) que sea en un
+  rango muy variado y amplio para poder tener arboles amplios de donde se elija una gran variedad de
+  sub-arboles y de nodos.
+- Metodo de inicializacion, con el termino init_method, con un valor de "Half and Half", que es
+  tener la posibilidad de generar arboles con variaciones entre sus parametros de profundidad y amplitud,
+  expresadas en "depth" y "grow"
+- Con ambas cosas anteriores se esta inicializando con el metodo "ramped half and half" como se menciona
+  en el documento de apoyo (paper).
+
+"Objetivo por correlacion"
+
+- la metrica de ajuste, con el parametro "metric", se elige "pearson". Para poder generar varias
+  variables explicativas a la vez, se maximiza la correlacion de estas respecto a la variable a explicar, y
+  se hace el calculo con el valor absoluto para que tambien se incluyan variables explicativas con
+  correlacion alta negativa.
+  Otra sugerencia es que se utilice pearson cuando las variables seran utilizadas para un modelo lineal,
+  y spearman para cuando es un modelo basado en arboles. Para el caso de un modelo lineal, hace sentido
+  puesto que las variables explicativas son relacionadas mediante una combinacion lineal de las mismas
+  para realizar la prediccion.
+  Los resultados de las variables generadas con menor correlacion entre ellas se reportan en el hall_of_fame,
+  y con el n_components se seleccionan las top N variables de acuerdo a su correlacion con la variable
+  explicativa.
+
+"Cross over y mutaciones".
+
+- Pendiente.
+
+"Parsimonia del proceso".
+
+- Pendiente.
+
+# ---------------------------------------------------------------------------------------------- CHARLA -- #
+
+Haremos una charla de divulgacion sobre el tema central de este trabajo. Será abierto a la comunidad ITESO,
+con una duración de 2 horas, se dará un certificado de asistencia a las personas inscritas. El propósito
+principal de esta charla es comunicar, de una manera amigable y con muchos ejemplos, el tema del uso de
+gplearn para generar variables explicativas no lineales para usarlas en modelos lineales. Se va a compartir
+un repositorio especial en github para que estén disponibles los códigos de ejemplo y notebooks. Será en
+línea.
+
+Pendientes iniciales
+- NOMBRE DE CHARLA
+- PEQUEÑA DESCRIPCION
+- DIA Y HORA
+- PLATAFORMA DE CONEXIÓN
+- REPOSITORIO
+- PONENTES: Francisco y Diana
+- PRESENTADOR: Riemann
+
+Pendientes posteriores
+- INVITACIÓN TIPO POSTER CON NOMBRE, PEQUEÑA DESCRIPCIÓN, DIA, HORA, PLATAFORMA, PONENTES
+- SESIÓN DE PRUEBA
+
+# --------------------------------------------------------------------------------- PENDIENTES 6.NOV -- #
+
+- Funcion para crear data set con futuros continuos (tener datos diarios).
+- - Esperaremos a resultados de PAP
+- Rutas heurísticas para definición de parámetros en gplearn.
+- - Mutaciones y crossover (Diana)
+- - Parsimonia del proceso (Francisco)
+- Decidir y hacer divisiones de datos para train, test. (Diana)
+- Ajuste de modelos (Francisco)
+- - OLS
+- - OLS con L1L2
+- - LS-SVM
+- Medidas de desempeño (Francisco).
+- Comparacion entre modelos (Diana).
+- Análisis de resultados de ajuste (Diana).
+- Visualización de resultados (Francisco - Diana).
+- Conclusiones (Francisco - Diana).
+- Escribir secciones para el articulo (Pendiente).

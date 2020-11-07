@@ -1,0 +1,33 @@
+
+# -- --------------------------------------------------------------------------------------------------- -- #
+# -- project: Multivariate Linear Regression with Symbolic Regressors and L1L2 Regularization            -- #
+# -- for future prices prediction, the case for UsdMxn                                                   -- #
+# -- script: changelog.txt : text file with changes specification                                        -- #
+# -- author: IFFranciscoME                                                                               -- #
+# -- license: GPL-3.0 License                                                                            -- #
+# -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
+# -- --------------------------------------------------------------------------------------------------- -- #
+
+Jueves 29.10.2020
+- Se agrego archivo changelog para control de cambios
+- Cambios en descripcion de proyecto en los docstring de todos los archivos
+- Se agrego carpeta "files" para ahi guardar el archivo "simbolic_features.csv"
+- Reacomodo de notas en archivo notes.txt
+- Cambios menores en formato y comentarios en codigos
+- Modificaciones en funcion generadora de features iniciales (producto hadamard y nmax para elegir)
+- mas features automaticos (p_nmax = 30)
+- 'had_' indicativo para columnas de producto hadamard y '_' para dividir features involucrados
+- separar funciones de regresion simple y aquellas con regularizacion
+- regresar mas parametros despues de ajuster modelos
+- modificados parametros de regreso de regresion simbolica
+- Se quito codigo de regresion con regularizacion (esto se va a hacer en R)
+- Se quito SymbolicRegression por SymbolicTransformer
+- Con la salida de SymbolicTransformer se incluyen los nuevos features en una nueva regresion simple
+
+Viernes 30.10.2020
+- Modificaciones a parametros de llamada del SymbolicRegressor.
+- Se agrego paper de referencia para leer mas sobre la inicializacion de la profundidad de los arboles.
+- Se redactaron "Rutas heuristicas" para elegir parametros de SymbolicTransformer.
+
+- Se hizo el proceso de generacion de variable explicativa desde data.py
+- Se separaron los conjuntos de entrenamiento y prueba en data.py
