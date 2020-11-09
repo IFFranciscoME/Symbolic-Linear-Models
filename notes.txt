@@ -82,7 +82,18 @@ RUTAS HEURISTICAS V0.1
 
 "Cross over y mutaciones".
 
-- Pendiente.
+- p_crossover: consiste en dos torneos, en el primero se elige al ganador (menor error) y aleatoriamente se elige
+ua rama para cambiar (se llama padre). Se hace un segundo torneo, y del ganador se elige una rama aleatoriamente
+(se llama donador). entonces se cambiar el padre con una rama del donador para generar un nuevo arbol.
+Entre mayor sea el parámetro, mayor la probabilidad de que se haga este proceso en la creación de un arbol
+- p_subtree_mutation. Parecido al p_crossover, excepto que en este caso, cuando se hace, el donador es
+generado aleatoriamente sin necesidad de un torneo para ser donador (más agresivo).
+- p_hoist_mutation: se usa para quitar elementos del arbol, se selecciona una rama, y se elige uno de
+los elementos de esta. Se cambia toda la rama por solo ese elemento
+- p_point_mutation: del padre se seleccionan algunos nodos y se cambian. Si es una variable se cambia por una variable
+si es una operación se cambia por una operación. Para saber cuantos cambios se hacen, se usa p_point_replace,
+donde se establece el promedio de cambios (donde 0 sería ningun cambio y 1 cambio en todos los nodos)
+
 
 "Parsimonia del proceso".
 

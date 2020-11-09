@@ -14,6 +14,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
+from sklearn.metrics import (accuracy_score, precision_score, recall_score)
+from sklearn import svm
+from sklearn.model_selection import train_test_split
 from gplearn.genetic import SymbolicRegressor, SymbolicTransformer          # regresion simbolica
 import gplearn as gpl
 
@@ -130,18 +133,18 @@ def mult_regression(p_x, p_y):
 
     # Fit LINEAR regression
     linreg = LinearRegression(normalize=False, fit_intercept=False)
-    linreg.fit(p_x, p_y)
-    y_p_linear = linreg.predict(p_x)
-    y_p_score = linreg.score(p_x, p_y)
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.8, random_state=455)
+    linreg.fit(xtrain, ytrain)
+    y_p_linear = linreg.predict(xtest)
+    y_p_score = linreg.score(xtest, ytest)
 
     # Return the result of the model
-    linear_model = {'rss': np.round(sum((y_p_linear - p_y) ** 2), 4),
-                    'predict': y_p_linear,
+    linear_model = {'rss': np.round(sum((y_p_linear - ytest) ** 2), 4),
+                    'predict': ytest,
                     'model': linreg,
                     'intercept': linreg.intercept_,
                     'coef': linreg.coef_,
                     'score': np.round(y_p_score, 4)}
-
     return linear_model
 
 
@@ -177,36 +180,36 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
         Diccionario con modelos ajustados
 
     """
-
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.8, random_state=455)
     # Fit RIDGE regression
     ridgereg = Ridge(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
-    ridgereg.fit(p_x, p_y)
-    y_p_ridge = ridgereg.predict(p_x)
+    ridgereg.fit(xtrain, ytrain)
+    y_p_ridge = ridgereg.predict(xtest)
 
     # Fit LASSO regression
     lassoreg = Lasso(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
-    lassoreg.fit(p_x, p_y)
-    y_p_lasso = lassoreg.predict(p_x)
+    lassoreg.fit(xtrain, ytrain)
+    y_p_lasso = lassoreg.predict(xtest)
 
     # Fit ElasticNet regression
     enetreg = ElasticNet(alpha=p_alpha, normalize=False, max_iter=p_iter, l1_ratio=0.5, fit_intercept=False)
-    enetreg.fit(p_x, p_y)
-    y_p_enet = enetreg.predict(p_x)
+    enetreg.fit(xtrain, ytrain)
+    y_p_enet = enetreg.predict(xtest)
 
     # RSS = residual sum of squares
 
     # Return the result of the model
-    r_models = {'rige': {'rss': sum((y_p_ridge - p_y) ** 2),
+    r_models = {'rige': {'rss': sum((y_p_ridge - ytest) ** 2),
                          'predict': y_p_ridge,
                          'model': ridgereg,
                          'intercept': ridgereg.intercept_,
                          'coef': ridgereg.coef_},
-                'lasso': {'rss': sum((y_p_lasso - p_y) ** 2),
+                'lasso': {'rss': sum((y_p_lasso - ytest) ** 2),
                           'predict': y_p_lasso,
                           'model': lassoreg,
                           'intercept': lassoreg.intercept_,
                           'coef': lassoreg.coef_},
-                'elasticnet': {'rss': sum((y_p_enet - p_y) ** 2),
+                'elasticnet': {'rss': sum((y_p_enet - ytest) ** 2),
                                'predict': y_p_enet,
                                'model': enetreg,
                                'intercept': enetreg.intercept_,
@@ -253,7 +256,7 @@ def symbolic_features(p_x, p_y):
                                 const_range=None, init_method='half and half', init_depth=(4, 12),
                                 metric='pearson', parsimony_coefficient=0.001,
                                 p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
-                                p_point_mutation=0.3,
+                                p_point_mutation=0.3, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
                                 warm_start=True)
 

@@ -68,7 +68,6 @@ print('Modelo Lineal 1: rss: ', lm_model['rss'])
 
 # R^2 of the model
 print('Modelo Lineal 1: score: ', lm_model['score'])
-
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
 # semilla para siempre obtener el mismo resultado
@@ -86,7 +85,7 @@ nuevos_features_c = pd.concat([features, pd.DataFrame(symbolic['fit'])], axis=1)
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 
 # Multple linear regression model
-lm_model_s = fn.mult_regression(p_x=nuevos_features, p_y=nuevos_features.iloc[:, 1])
+lm_model_s = fn.mult_regression(p_x=nuevos_features_c.iloc[:, 3:], p_y=nuevos_features_c.iloc[:, 1])
 
 # RSS of the model with all the variables
 print('Modelo Lineal 2: rss: ', lm_model_s['rss'])
