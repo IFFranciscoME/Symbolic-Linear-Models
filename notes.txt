@@ -139,3 +139,30 @@ Pendientes posteriores
 - Visualización de resultados (Francisco - Diana).
 - Conclusiones (Francisco - Diana).
 - Escribir secciones para el articulo (Pendiente).
+
+
+# -------------------------------------------------------------------------------- PENDIENTES 17.DIC -- #
+
+
+# - Hacer division de datos train y test sin filtraciones.
+
+# - Hacer el tunning de arboles poco profundos y poco largos utilizando variaciones de parametros
+    del symbolictransformer, a esto le llamaremos "Ruta heuristica para parsimonia de modelo" 
+    y consistira en criterios para elegir ciertos parametros del SymbolicTransformer con la 
+    finalidad de mantener variables simbolicas "poco complejas" y "faciles de explicar".
+
+# - Con datos de train, correr symbolictransformer para generar 20 variables simbolicas
+
+# - Hacer funcion para crear los features en test *utilizando las ecuaciones extraidas desde train
+
+# - Hacer 4 modelos predictivos:
+    (1) OlsNet: Regresion OLS con elasticnet forzado para clasificiacion
+    (2) LogisticNet : Regresion logistica con elasticnet
+    (3) L1-SVM : Support Vector Machine Clasificador con regularizacion L1
+    (4) ANN-MLP : Perceptron multicapa con retropropagacion
+
+# - Hacer y correr codigo de optimizacion de los hiperparametros de los modelos con algoritmos geneticos
+
+# - visualizaciones y tablas de metricas de optimizacion
+
+# - conclusiones cuantitativas.
