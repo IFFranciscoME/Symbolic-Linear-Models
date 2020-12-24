@@ -133,14 +133,14 @@ def mult_regression(p_x, p_y):
 
     # Fit LINEAR regression
     linreg = LinearRegression(normalize=False, fit_intercept=False)
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.8, random_state=455)
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
     linreg.fit(xtrain, ytrain)
     y_p_linear = linreg.predict(xtest)
     y_p_score = linreg.score(xtest, ytest)
 
     # Return the result of the model
     linear_model = {'rss': np.round(sum((y_p_linear - ytest) ** 2), 4),
-                    'predict': ytest,
+                    'predict': y_p_linear,
                     'model': linreg,
                     'intercept': linreg.intercept_,
                     'coef': linreg.coef_,
@@ -180,7 +180,7 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
         Diccionario con modelos ajustados
 
     """
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.8, random_state=455)
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
     # Fit RIDGE regression
     ridgereg = Ridge(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
     ridgereg.fit(xtrain, ytrain)
@@ -199,7 +199,10 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
     # RSS = residual sum of squares
 
     # Return the result of the model
-    r_models = {'rige': {'rss': sum((y_p_ridge - ytest) ** 2),
+    r_models = {"summary": {"Ridge rss": sum((y_p_ridge - ytest) ** 2),
+                            "lasso rss": sum((y_p_lasso - ytest) ** 2),
+                            "elasticnet rss": sum((y_p_enet - ytest) ** 2)},
+                'rige': {'rss': sum((y_p_ridge - ytest) ** 2),
                          'predict': y_p_ridge,
                          'model': ridgereg,
                          'intercept': ridgereg.intercept_,
@@ -250,18 +253,28 @@ def symbolic_features(p_x, p_y):
 
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
 
-    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'],
-                                population_size=5000, hall_of_fame=100, n_components=20,
+    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log',
+                                              'min', 'max'],
+                                population_size=1000, hall_of_fame=100, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
                                 const_range=None, init_method='half and half', init_depth=(4, 12),
                                 metric='pearson', parsimony_coefficient=0.001,
-                                p_crossover=0.4, p_subtree_mutation=0.2, p_hoist_mutation=0.1,
-                                p_point_mutation=0.3, p_point_replace=.05,
+                                p_crossover=0.4, p_subtree_mutation=0.1, p_hoist_mutation=0.2,
+                                p_point_mutation=0.1, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
                                 warm_start=True)
-
-    model_fit = model.fit_transform(p_x, p_y)
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
+    model.fit_transform(xtrain, ytrain)
     model_params = model.get_params()
+    gp_features = model.transform(p_x)
+    model_fit = np.hstack((p_x, gp_features))
     results = {'fit': model_fit, 'params': model_params, 'model': model}
-
-    return results
+    best_p = model._best_programs
+    best_p_dict={}
+    for p in best_p:
+        factor_name = 'alpha_'+str(best_p.index(p)+1)
+        best_p_dict[factor_name] = {'fitness': p.fitness_, "expression": str(p), 'depth': p.depth_,
+                                    "length": p.length_}
+    best_p_dict = pd.DataFrame(best_p_dict).T
+    best_p_dict = best_p_dict.sort_values(by="fitness")
+    return results,best_p_dict
