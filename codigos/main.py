@@ -60,7 +60,7 @@ cor_mat = features.iloc[:, 1:].corr()
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 
-# Multple linear regression model 
+# Multple linear regression model
 lm_model = fn.mult_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 lm_model_reg = fn.mult_reg_l1l2(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1], p_alpha=1e-3, p_iter=1e6)
 # RSS of the model with all the variables
@@ -72,8 +72,10 @@ print('Modelo Lineal 1: score: ', lm_model['score'])
 
 # semilla para siempre obtener el mismo resultado
 np.random.seed(879)
-
 # Generacion de un feature formado con variable simbolica
+symbolic_1 = fn.symbolic_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
+
+# Generacion de muchos features formado con variables simbolica
 symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 
 #symbolic['model']._best_programs[3].__str__()

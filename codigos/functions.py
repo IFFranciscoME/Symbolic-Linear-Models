@@ -12,6 +12,7 @@
 
 import numpy as np
 import pandas as pd
+from sympy import *
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
 from sklearn.metrics import (accuracy_score, precision_score, recall_score)
@@ -224,6 +225,36 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
 
 # ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
 # --------------------------------------------------------------------------------------------------------- #
+def symbolic_regression(p_x, p_y):
+    def _rss(y, y_pred,w):
+        diffs = (y - y_pred) ** 2
+        return np.sum(diffs)
+
+    rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
+    converter = {
+        'sub': lambda x, y: x - y,
+        'div': lambda x, y: x / y,
+        'mul': lambda x, y: x * y,
+        'add': lambda x, y: x + y,
+        'neg': lambda x: -x,
+        'sin': lambda x: sin(x),
+        'cos': lambda x: cos(x),
+        'inv': lambda x: 1 / x
+    }
+    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', "log", 'min', 'max'],
+                                population_size=1000, generations=20, tournament_size=20, stopping_criteria=.05,
+                                metric=rss, parsimony_coefficient=0.001,
+                                p_crossover=0.4, p_subtree_mutation=0.1, p_hoist_mutation=0.2,
+                                p_point_mutation=0.1, p_point_replace=.05,
+                                verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
+                                warm_start=True)
+    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
+    est_gp.fit(xtrain, ytrain)
+    sim_pred = est_gp.predict(xtest)
+    # next_e = sympify(est_gp._program, locals=converter)
+    print("rss simbolic regression: ",sum((sim_pred - ytest) ** 2))
+    return est_gp
+
 
 def symbolic_features(p_x, p_y):
     """
@@ -251,6 +282,12 @@ def symbolic_features(p_x, p_y):
         diffs = (y - y_pred) ** 2
         return np.sum(diffs)
 
+    def _mean_square_error(y, y_pred, w):
+        """Calculate the mean square error."""
+        return np.average(((y_pred - y) ** 2), weights=w)
+
+    mse = gpl.fitness.make_fitness(function=_mean_square_error,
+                                 greater_is_better=False)
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
 
     model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log',
@@ -258,7 +295,7 @@ def symbolic_features(p_x, p_y):
                                 population_size=1000, hall_of_fame=100, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
                                 const_range=None, init_method='half and half', init_depth=(4, 12),
-                                metric='pearson', parsimony_coefficient=0.001,
+                                metric="pearson", parsimony_coefficient=0.001,
                                 p_crossover=0.4, p_subtree_mutation=0.1, p_hoist_mutation=0.2,
                                 p_point_mutation=0.1, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
@@ -277,4 +314,4 @@ def symbolic_features(p_x, p_y):
                                     "length": p.length_}
     best_p_dict = pd.DataFrame(best_p_dict).T
     best_p_dict = best_p_dict.sort_values(by="fitness")
-    return results,best_p_dict
+    return results, best_p_dict
