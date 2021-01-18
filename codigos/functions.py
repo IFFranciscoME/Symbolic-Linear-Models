@@ -15,10 +15,9 @@ import pandas as pd
 from sympy import *
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
-from sklearn.metrics import (accuracy_score, precision_score, recall_score)
-from sklearn import svm
 from sklearn.model_selection import train_test_split
-from gplearn.genetic import SymbolicRegressor, SymbolicTransformer          # regresion simbolica
+from sklearn.metrics import r2_score
+from gplearn.genetic import SymbolicTransformer          # regresion simbolica
 import gplearn as gpl
 
 
@@ -137,7 +136,6 @@ def mult_regression(p_x, p_y):
     xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
     linreg.fit(xtrain, ytrain)
     y_p_linear = linreg.predict(xtest)
-    y_p_score = linreg.score(xtest, ytest)
 
     # Return the result of the model
     linear_model = {'rss': np.round(sum((y_p_linear - ytest) ** 2), 4),
@@ -145,14 +143,14 @@ def mult_regression(p_x, p_y):
                     'model': linreg,
                     'intercept': linreg.intercept_,
                     'coef': linreg.coef_,
-                    'score': np.round(y_p_score, 4)}
+                    'score': r2_score(ytest, y_p_linear)}
     return linear_model
 
 
 # -------------------------------- MODEL: Multivariate Linear Regression Models with L1L2 regularization -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
+def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter,l1_ratio):
     """
     Funcion para ajustar varios modelos lineales
 
@@ -193,7 +191,7 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
     y_p_lasso = lassoreg.predict(xtest)
 
     # Fit ElasticNet regression
-    enetreg = ElasticNet(alpha=p_alpha, normalize=False, max_iter=p_iter, l1_ratio=0.5, fit_intercept=False)
+    enetreg = ElasticNet(alpha=p_alpha, normalize=False, max_iter=p_iter, l1_ratio=l1_ratio, fit_intercept=False)
     enetreg.fit(xtrain, ytrain)
     y_p_enet = enetreg.predict(xtest)
 
@@ -203,21 +201,24 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
     r_models = {"summary": {"Ridge rss": sum((y_p_ridge - ytest) ** 2),
                             "lasso rss": sum((y_p_lasso - ytest) ** 2),
                             "elasticnet rss": sum((y_p_enet - ytest) ** 2)},
-                'rige': {'rss': sum((y_p_ridge - ytest) ** 2),
+                'ridge': {'rss': sum((y_p_ridge - ytest) ** 2),
                          'predict': y_p_ridge,
                          'model': ridgereg,
                          'intercept': ridgereg.intercept_,
-                         'coef': ridgereg.coef_},
+                         'coef': ridgereg.coef_,
+                         'score': r2_score(ytest, y_p_ridge)},
                 'lasso': {'rss': sum((y_p_lasso - ytest) ** 2),
                           'predict': y_p_lasso,
                           'model': lassoreg,
                           'intercept': lassoreg.intercept_,
-                          'coef': lassoreg.coef_},
+                          'coef': lassoreg.coef_,
+                          'score': r2_score(ytest, y_p_lasso)},
                 'elasticnet': {'rss': sum((y_p_enet - ytest) ** 2),
                                'predict': y_p_enet,
                                'model': enetreg,
                                'intercept': enetreg.intercept_,
-                               'coef': enetreg.coef_}
+                               'coef': enetreg.coef_,
+                               'score': r2_score(ytest, y_p_enet)}
                 }
 
     return r_models
@@ -225,37 +226,6 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter):
 
 # ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
 # --------------------------------------------------------------------------------------------------------- #
-def symbolic_regression(p_x, p_y):
-    def _rss(y, y_pred,w):
-        diffs = (y - y_pred) ** 2
-        return np.sum(diffs)
-
-    rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-    converter = {
-        'sub': lambda x, y: x - y,
-        'div': lambda x, y: x / y,
-        'mul': lambda x, y: x * y,
-        'add': lambda x, y: x + y,
-        'neg': lambda x: -x,
-        'sin': lambda x: sin(x),
-        'cos': lambda x: cos(x),
-        'inv': lambda x: 1 / x
-    }
-    est_gp = SymbolicRegressor(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', "log", 'min', 'max'],
-                                population_size=1000, generations=20, tournament_size=20, stopping_criteria=.05,
-                                metric=rss, parsimony_coefficient=0.001,
-                                p_crossover=0.4, p_subtree_mutation=0.1, p_hoist_mutation=0.2,
-                                p_point_mutation=0.1, p_point_replace=.05,
-                                verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
-                                warm_start=True)
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
-    est_gp.fit(xtrain, ytrain)
-    sim_pred = est_gp.predict(xtest)
-    # next_e = sympify(est_gp._program, locals=converter)
-    print("rss simbolic regression: ",sum((sim_pred - ytest) ** 2))
-    return est_gp
-
-
 def symbolic_features(p_x, p_y):
     """
     Funcion para crear regresores no lineales
@@ -282,20 +252,13 @@ def symbolic_features(p_x, p_y):
         diffs = (y - y_pred) ** 2
         return np.sum(diffs)
 
-    def _mean_square_error(y, y_pred, w):
-        """Calculate the mean square error."""
-        return np.average(((y_pred - y) ** 2), weights=w)
-
-    mse = gpl.fitness.make_fitness(function=_mean_square_error,
-                                 greater_is_better=False)
     rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
 
-    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log',
-                                              'min', 'max'],
+    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log', 'max', 'min'],
                                 population_size=1000, hall_of_fame=100, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
                                 const_range=None, init_method='half and half', init_depth=(4, 12),
-                                metric="pearson", parsimony_coefficient=0.001,
+                                metric='pearson', parsimony_coefficient=0.001,
                                 p_crossover=0.4, p_subtree_mutation=0.1, p_hoist_mutation=0.2,
                                 p_point_mutation=0.1, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,

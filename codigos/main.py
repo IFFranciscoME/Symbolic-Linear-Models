@@ -12,9 +12,9 @@
 
 import pandas as pd
 import numpy as np
-import codigos.functions as fn
-from codigos.data import m6e1
-from codigos.visualizations import vs
+import functions as fn
+from data import m6e1
+from visualizations import vs
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
 pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
@@ -62,34 +62,26 @@ cor_mat = features.iloc[:, 1:].corr()
 
 # Multple linear regression model
 lm_model = fn.mult_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-lm_model_reg = fn.mult_reg_l1l2(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1], p_alpha=1e-3, p_iter=1e6)
-# RSS of the model with all the variables
-print('Modelo Lineal 1: rss: ', lm_model['rss'])
-
-# R^2 of the model
-print('Modelo Lineal 1: score: ', lm_model['score'])
+lm_model_reg = fn.mult_reg_l1l2(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1], p_alpha=1e-2, p_iter=1e6,
+                                l1_ratio=.25)
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
 # semilla para siempre obtener el mismo resultado
 np.random.seed(879)
-# Generacion de un feature formado con variable simbolica
-symbolic_1 = fn.symbolic_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-
 # Generacion de muchos features formado con variables simbolica
 symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-
-#symbolic['model']._best_programs[3].__str__()
-# -- Transformer -- #
 nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
-# nuevos_features_c = pd.concat([features, pd.DataFrame(symbolic['fit'])], axis=1)
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 
 # Multple linear regression model
 lm_model_s = fn.mult_regression(p_x=nuevos_features, p_y=features.iloc[:, 1])
-lm_model_reg_s= fn.mult_reg_l1l2(p_x=nuevos_features, p_y=features.iloc[:, 1], p_alpha=1e-3, p_iter=1e6)
+lm_model_reg_s = fn.mult_reg_l1l2(p_x=nuevos_features, p_y=features.iloc[:, 1], p_alpha=.06, p_iter=1e6, l1_ratio=.5)
 #
+
+
+print('Modelo Lineal 1: rss: ', lm_model['rss'])
+print('Modelo Lineal 1: score: ', lm_model['score'])
 # RSS of the model with all the variables
-print('Modelo Lineal 2: rss: ', lm_model_s['rss'])
-# R^2 of the model
-print('Modelo Lineal 2: score: ', lm_model_s['score'])
+print('Modelo Lineal simbolico y con regularización: rss: ', lm_model_reg_s['elasticnet']['rss'])
+print('Modelo Lineal simbolico y con regularización: score: ', lm_model_reg_s['elasticnet']['score'])
