@@ -75,13 +75,13 @@ nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 
 # Multple linear regression model
-lm_model_s = fn.mult_regression(p_x=nuevos_features, p_y=features.iloc[:, 1])
-lm_model_reg_s = fn.mult_reg_l1l2(p_x=nuevos_features, p_y=features.iloc[:, 1], p_alpha=.06, p_iter=1e6, l1_ratio=.5)
-#
+selected, af, rf=fn.optimizacion(nuevos_features, features)
+#.02 alpha 1 ratio
+
 
 
 print('Modelo Lineal 1: rss: ', lm_model['rss'])
 print('Modelo Lineal 1: score: ', lm_model['score'])
 # RSS of the model with all the variables
-print('Modelo Lineal simbolico y con regularización: rss: ', lm_model_reg_s['elasticnet']['rss'])
-print('Modelo Lineal simbolico y con regularización: score: ', lm_model_reg_s['elasticnet']['score'])
+print('Modelo Lineal simbolico y con regularización: rss: ', selected['elasticnet']['rss'])
+print('Modelo Lineal simbolico y con regularización: score: ', selected['elasticnet']['score'])
