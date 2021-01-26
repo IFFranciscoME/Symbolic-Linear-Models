@@ -45,10 +45,10 @@ Martes 26.01.2021
 - Cambiar en functions.py: Nombre de f_features a features
 - Quitar en main.py el uso de datos con Quandl
 - Cambiar en main.py: el orden del procesamiento y extener los comentarios
-
-- (inconcluso) Agregar en functions.py: funcion para regresion (ols y ols-elasticnet)
-- (inconcluso) Agregar en functions.py: funcion para clasificacion (logistica y logistica-elasticnet)
-- (inconcluso) Agregar funcionalidad de optimizacion con algoritmos geneticos
+- Agregar en functions.py: funcion para regresion (ols y ols-elasticnet)
+- Agregar en functions.py: funcion para clasificacion (logistica y logistica-elasticnet)
+- Agregar funcionalidad de optimizacion con algoritmos geneticos
+- Cambiar en varios scripts que los datos solo sean x_data y y_data en lugar de x_train/y_train x_test/y_test
 
 - (pendiente) Proponer 2 metricas nuevas para SymbolicTransformer (clasificacion y regresion)
 - (pendiente) Graficas y tablas para visualizacion de performance (clasificacion y regresion)

@@ -94,4 +94,4 @@ symbolic_params = {'functions': ["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'
 # ------------------------------------------------------------------------ ----------------------------- -- #
 
 # 100 different values for each parameter
-model_params = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(0, 2, 0.02)}
+params = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(0, 2, 0.02)}

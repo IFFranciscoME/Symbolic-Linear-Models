@@ -17,6 +17,7 @@ from sympy import *
 
 from sklearn.linear_model import LinearRegression, ElasticNet, LogisticRegression
 from sklearn.preprocessing import StandardScaler, RobustScaler, MaxAbsScaler
+from sklearn.metrics import confusion_matrix, accuracy_score, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 
@@ -162,6 +163,78 @@ def features(p_data, p_nmax):
     return r_features
 
 
+# -- --------------------------------------------------------------------- Metrics for Model Performance -- # 
+# -- --------------------------------------------------------------------- ----------------------------- -- #
+
+def model_metrics(p_model, p_data, p_type):
+    """
+    
+    Parameters
+    ----------
+    p_model: str
+        string with the name of the model
+    
+    p_data: dict
+        With x_data, y_data keys
+    
+    p_type: str
+        the type of model: 'regression', 'classification'
+   
+    Returns
+    -------
+    r_model_metrics
+
+    References
+    ----------
+
+
+    """
+
+    # metrics for a classification model
+    if p_type == 'classification':
+
+        # fitted train values
+        y_model_data = p_model.predict(p_data['x_data'])
+        p_y_result_data = pd.DataFrame({'y_data': p_data['y_data'], 'y_data_pred': y_model_data})
+
+        # Confussion matrix
+        cm_data = confusion_matrix(p_y_result_data['y_data'], p_y_result_data['y_data_pred'])
+        # Probabilities of class in train data
+        probs_data = p_model.predict_proba(p_data['x_data'])
+        # in case of a nan, replace it with zero (to prevent errors)
+        probs_data = np.nan_to_num(probs_data)
+        
+        # Accuracy rate
+        acc_data = round(accuracy_score(list(p_data['y_data']), y_model_data), 4)
+        # False Positive Rate, True Positive Rate, Thresholds
+        fpr_data, tpr_data, thresholds = roc_curve(list(p_data['y_data']), probs_data[:, 1], pos_label=1)
+        # Area Under the Curve (ROC) for train data
+        auc_data = round(roc_auc_score(list(p_data['y_data']), probs_data[:, 1]), 4)
+
+        # Return the result of the model
+        return {'model': p_model,
+                'results': {'x_data': p_data['x_data'], 'y_data': p_data['y_data'], 'y_data_p': y_model_data},
+
+                'metrics': {'acc': acc_data, 'tpr': tpr_data, 'fpr': fpr_data, 'probs': probs_data,
+                'auc': auc_data, 'matrix': cm_data}}
+
+    # metrics for a regression model
+    elif p_type == 'regression':
+
+        # Model predict
+        y_model_data = p_model.predict(p_data['x_data'])
+
+        # Return the result of the model
+        return {'model': p_model,
+                'results': {'x_data': p_data['x_data'], 'y_data': p_data['y_data'], 'y_data_p': y_model_data},
+
+                'metrics': {'rss': sum((y_model_data - p_data['y_train']) ** 2), 'coef': p_model.coef_,
+                            'r2': r2_score(p_data['y_data'], p_model), 'intercept': p_model.intercept_}}
+
+    else:
+        return 'error: invalid type of model'
+
+
 # --------------------------------------------------- Logistic Regression with ElasticNet Regularization -- #
 # --------------------------------------------------------------------------------------------------------- #
 
@@ -206,52 +279,34 @@ def logistic_reg(p_data, p_model, p_params, p_iter):
 
     """
 
+    # dummy variable
+    model = ''
+
     # Logistic regression without regularization
     if p_model == 'logistic':
 
         # Model specification
-        logistic_model = LogisticRegression(l1_ratio=0, C=p_params['c'], tol=1e-3, penalty='none', 
-                                            olver='saga', multi_class='ovr', n_jobs=-1,
-                                            max_iter=p_iter, fit_intercept=False, random_state=123)
-
-        # Model fit
-        logistic_model.fit(p_data['x_train'], p_data['y_train'])
-
-        # Model predict
-        y_logistic_model = logistic_model.predict(p_data['x_train'])
-
-        # Model results
-        return {'rss': sum((y_logistic_model - p_data['y_train']) ** 2),
-                'predict': y_logistic_model,
-                'model': logistic_model,
-                'intercept': logistic_model.intercept_,
-                'coef': logistic_model.coef_,
-                'score': 'accuracy, auc'}
-
+        model = LogisticRegression(l1_ratio=0, C=p_params['c'], tol=1e-3, penalty='none', 
+                                   olver='saga', multi_class='ovr', n_jobs=-1,
+                                   max_iter=p_iter, fit_intercept=False, random_state=123)
+        
     # Logistic regression with elastic net regularization
     elif p_model == 'logistic_en':
 
         # Model specification
-        logistic_en_model = LogisticRegression(l1_ratio=p_params['ratio'], C=p_params['c'], tol=1e-3,
-                                  penalty='elasticnet', solver='saga', multi_class='ovr', n_jobs=-1,
-                                  max_iter=p_iter, fit_intercept=False, random_state=123)
-        
-        # Model fit
-        logistic_en_model.fit(p_data['x_train'], p_data['y_train'])
+        model = LogisticRegression(l1_ratio=p_params['ratio'], C=p_params['c'], tol=1e-3,
+                                   penalty='elasticnet', solver='saga', multi_class='ovr', n_jobs=-1,
+                                   max_iter=p_iter, fit_intercept=False, random_state=123)
 
-        # Model predict
-        y_logistic_en_model = logistic_en_model.predict(p_data['x_train'])
-
-        # Model results
-        return {'rss': sum((y_logistic_en_model - p_data['y_train']) ** 2),
-                'predict': y_logistic_en_model,
-                'model': logistic_en_model,
-                'intercept': logistic_en_model.intercept_,
-                'coef': logistic_en_model.coef_,
-                'score': 'accuracy, auc'}
-
+    # report error
     else:
-        return 'error'
+        return 'error: invalid model'
+    
+    # Model fit
+    model.fit(p_data['x_data'], p_data['y_data'])
+
+    # performance metrics of the model
+    return model_metrics(p_model=model, p_data=p_data)
 
 
 # ------------------------------------------------------------ OLS Regression Models with Regularization -- #
@@ -298,49 +353,31 @@ def ols_reg(p_data, p_model, p_params, p_iter):
       
     """
 
+    # dummy variable
+    model = ''
+
     # Ordinary Least Squares regression without regularization
     if p_model == 'ols':
 
         # Model specification
-        ols_model = LinearRegression(normalize=False, fit_intercept=False)
-
-        # Model fit
-        ols_model.fit(p_data['x_train'], p_data['y_train'])
-
-        # Model predict
-        y_ols_model = ols_model.predict(p_data['x_train'])
-
-        # Model results
-        return {'rss': sum((y_ols_model - p_data['y_train']) ** 2),
-                'predict': y_ols_model,
-                'model': ols_model,
-                'intercept': ols_model.intercept_,
-                'coef': ols_model.coef_,
-                'score': r2_score(p_data['y_train'], y_ols_model)}
+        model = LinearRegression(normalize=False, fit_intercept=False)
 
     # Ordinary Least Squares regression without regularization
     elif p_model == 'ols_en':
 
         # Model specification
-        ols_en_model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],    
-                                  it_intercept=False)
+        model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],    
+                           it_intercept=False)
 
-        # Model fit
-        ols_en_model.fit(p_data['x_train'], p_data['y_train'])
-
-        # Model predict
-        y_ols_en_model = ols_en_model.predict(p_data['x_train'])
-
-        # Model results
-        return {'rss': sum((y_ols_en_model - p_data['y_train']) ** 2),
-                'predict': y_ols_en_model,
-                'model': ols_en_model,
-                'intercept': ols_en_model.intercept_,
-                'coef': ols_en_model.coef_,
-                'score': r2_score(p_data['y_train'], y_ols_en_model)}
-
+    # error in model key
     else:
-        return 'error'
+        return 'error: invalid model key'
+
+    # Model fit
+    model.fit(p_data['x_data'], p_data['y_data'])
+
+    # performance metrics of the model
+    return model_metrics(p_model=model, p_data=p_data)
 
 
 # ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
@@ -371,8 +408,6 @@ def symbolic_features(p_x, p_y):
         diffs = (y - y_pred) ** 2
         return np.sum(diffs)
 
-    rss = gpl.fitness.make_fitness(_rss, greater_is_better=False)
-
     model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log', 'max', 'min'],
                                 population_size=1000, hall_of_fame=100, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
@@ -387,7 +422,7 @@ def symbolic_features(p_x, p_y):
     model.fit_transform(xtrain, ytrain)
     model_params = model.get_params()
     gp_features = model.transform(p_x)
-    
+
     model_fit = np.hstack((p_x, gp_features))
     results = {'fit': model_fit, 'params': model_params, 'model': model}
     best_p = model._best_programs
@@ -430,72 +465,68 @@ def optimization(p_data, p_model, p_params):
 
     """
 
-    # initialize genetic algorithm object
+    # Initialize genetic algorithm object
     creator.create("FitnessMax_en", base.Fitness, weights=(1.0,))
     creator.create("Individual_en", list, fitness=creator.FitnessMax_en)
     toolbox_en = base.Toolbox()
 
-    # define how each gene will be generated (e.g. criterion is a random choice from the criterion list).
-    toolbox_en.register("attr_ratio", random.choice, p_model['params']['ratio'])
-    toolbox_en.register("attr_c", random.choice, p_model['params']['c'])
+    # Define how each gene will be generated (e.g. criterion is a random choice from the criterion list).
+    toolbox_en.register("attr_ratio", random.choice, p_params['ratio'])
+    toolbox_en.register("attr_c", random.choice, p_params['c'])
 
     # This is the order in which genes will be combined to create a chromosome
     toolbox_en.register("Individual_en", tools.initCycle, creator.Individual_en,
                         (toolbox_en.attr_ratio, toolbox_en.attr_c), n=1)
 
-    # population definition
+    # Population definition
     toolbox_en.register("population", tools.initRepeat, list, toolbox_en.Individual_en)
 
-    # -------------------------------------------------------------- funcion de mutacion para LS SVM -- #
+    # -------------------------------------------------------------------------------- Mutation function -- #
     def mutate_en(individual):
 
         # select which parameter to mutate
-        gene = random.randint(0, len(p_model['params']) - 1)
+        gene = random.randint(0, len(p_params) - 1)
 
         if gene == 0:
-            individual[0] = random.choice(p_model['params']['ratio'])
+            individual[0] = random.choice(p_params['ratio'])
         elif gene == 1:
-            individual[1] = random.choice(p_model['params']['c'])
+            individual[1] = random.choice(p_params['c'])
 
         return individual,
 
-    # --------------------------------------------------- funcion de evaluacion para OLS Elastic Net -- #
+    # ------------------------------------------------------------------------------ Evaluation function -- #
     def evaluate_en(eva_individual):
 
         # output of genetic algorithm
         chromosome = {'ratio': eva_individual[0], 'c': eva_individual[1]}
 
-        
+        # evaluation with fitness metric for classification model
         if p_model == 'classification':
 
             # model results
             model = logistic_reg(p_data=p_data, p_params=chromosome)
 
-            # True positives in train data
-            train_tp = model['results']['matrix']['train'][0, 0]
-            # True negatives in train data
-            train_tn = model['results']['matrix']['train'][1, 1]
-            # Model accuracy
-            train_fit = (train_tp + train_tn) / len(model['results']['data']['train'])
+            # fitness measure
+            model_fit = model['metrics']['auc']
 
-            # True positives in test data
-            test_tp = model['results']['matrix']['test'][0, 0]
-            # True negatives in test data
-            test_tn = model['results']['matrix']['test'][1, 1]
-            # Model accuracy
-            test_fit = (test_tp + test_tn) / len(model['results']['data']['test'])
-
-            # Fitness measure
-            model_fit = np.mean([train_fit, test_fit])
-
+            # always return a tupple
             return model_fit,
-                
+
+        # evaluation with fitness metric for regression model
         elif p_model == 'regression':
             
-            model_fit = 1
-            # aqui va para el caso de regresion 
+           # model results
+            model = ols_reg(p_data=p_data, p_params=chromosome)
 
+            # Fitness measure
+            model_fit = model['metrics']['rss']
+
+            # always return a tupple
             return model_fit,
+        
+        # error in type of model
+        else:
+            return 'error: invalid type of model'
 
     toolbox_en.register("mate", tools.cxOnePoint)
     toolbox_en.register("mutate", mutate_en)
