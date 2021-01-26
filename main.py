@@ -13,7 +13,7 @@
 import pandas as pd
 import numpy as np
 import functions as fn
-from data import m6e1
+from data import ohlc_data
 from visualizations import vs
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
@@ -25,8 +25,17 @@ pd.set_option('display.expand_frame_repr', False)         # visualizar todas las
 
 # m6e : Micro Eur/Usd Future: https://www.cmegroup.com/trading/fx/e-micros/e-micro-euro.html
 # obtained with Quandl / Chris free data set. Gathers the data from webscraping cmegroup's future data
-data = m6e1.tail(160)
+# data = m6e1.tail(160)
 # data.tail()
+
+# train data (2011 to 2018) - Use any number of times
+data = ohlc_data['train']
+
+# test data (2019) - Use max 10 times
+# data = ohlc_data['train']
+
+# validation data (2020) - Use 1 time at the very end
+# data = ohlc_data['val']
 
 # -- ------------------------------------------------------------------------- Exploratory Data Analysis -- #
 
@@ -49,7 +58,7 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
 # ingenieria de caracteristicas con variable endogena
-features = fn.f_features(p_data=data, p_nmax=6)
+features = fn.f_features(p_data=data, p_nmax=7)
 
 # Conjunto de entrenamiento
 
@@ -77,8 +86,6 @@ nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
 # Multple linear regression model
 selected, af, rf=fn.optimizacion(nuevos_features, features)
 #.02 alpha 1 ratio
-
-
 
 print('Modelo Lineal 1: rss: ', lm_model['rss'])
 print('Modelo Lineal 1: score: ', lm_model['score'])

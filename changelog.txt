@@ -36,5 +36,11 @@ Viernes 22.01.2021
 - Modificacion y acomodo de folders del proyecto
 
 Martes 26.01.2021
-- (pendiente) Cambiar los precios historicos por archivo de firstrate con resampleo
+- Cambiar los precios historicos por archivo de firstrate con resampleo
+- Agregar indicativo de separacion 'Train: 2010-2018, Test: 2019, Validate: 2020'
+- Cambiar calculos de features con openiterest a volume (en nvos datos no hay openiterest)
+
+- (pendiente) Verificar lista de parametros para optimizar
 - (pendiente) Agregar funcionalidad de optimizacion con algoritmos geneticos
+- (pendiente) Proponer 2 metricas nuevas para SymbolicTransformer (clasificacion y regresion)
+- (pendiente) Graficas y tablas para visualizacion de performance (clasificacion y regresion)

@@ -48,7 +48,7 @@ def f_features(p_data, p_nmax):
     for n in range(0, p_nmax):
     
         # rezago n de Open Interest
-        data['lag_oi_' + str(n + 1)] = data['openinterest'].shift(n + 1)
+        data['lag_vl_' + str(n + 1)] = data['volume'].shift(n + 1)
     
         # rezago n de Open - Low
         data['lag_ol_' + str(n + 1)] = data['ol'].shift(n + 1)
@@ -60,7 +60,7 @@ def f_features(p_data, p_nmax):
         data['lag_hl_' + str(n + 1)] = data['hl'].shift(n + 1)
     
         # promedio movil de open-high de ventana n
-        data['ma_oi_' + str(n + 2)] = data['openinterest'].rolling(n + 2).mean()
+        data['ma_vl_' + str(n + 2)] = data['volume'].rolling(n + 2).mean()
     
         # promedio movil de open-high de ventana n
         data['ma_ol_' + str(n + 2)] = data['ol'].rolling(n + 2).mean()
@@ -72,20 +72,19 @@ def f_features(p_data, p_nmax):
         data['ma_hl_' + str(n + 2)] = data['hl'].rolling(n + 2).mean()
 
         # hadamard product of previously generated features
-        list_hadamard = [data['lag_oi_' + str(n + 1)], data['lag_ol_' + str(n + 1)],
+        list_hadamard = [data['lag_vl_' + str(n + 1)], data['lag_ol_' + str(n + 1)],
                          data['lag_ho_' + str(n + 1)], data['lag_hl_' + str(n + 1)]]
 
         for x in list_hadamard:
-            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_oi_' + str(n + 2)] = x*data['ma_oi_' + str(n + 2)]
-            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_ol_' + str(n + 2)] = x*data['ma_ol_' + str(n + 2)]
-            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_ho_' + str(n + 2)] = x*data['ma_ho_' + str(n + 2)]
-            data['had_'+'lag_oi_' + str(n + 1) + '_' + 'ma_hl_' + str(n + 2)] = x*data['ma_hl_' + str(n + 2)]
+            data['had_'+'lag_vl_' + str(n + 1) + '_' + 'ma_vl_' + str(n + 2)] = x*data['ma_vl_' + str(n + 2)]
+            data['had_'+'lag_vl_' + str(n + 1) + '_' + 'ma_ol_' + str(n + 2)] = x*data['ma_ol_' + str(n + 2)]
+            data['had_'+'lag_vl_' + str(n + 1) + '_' + 'ma_ho_' + str(n + 2)] = x*data['ma_ho_' + str(n + 2)]
+            data['had_'+'lag_vl_' + str(n + 1) + '_' + 'ma_hl_' + str(n + 2)] = x*data['ma_hl_' + str(n + 2)]
 
     # asignar timestamp como index
     data.index = pd.to_datetime(data.index)
     # quitar columnas no necesarias para modelos de ML
-    r_features = data.drop(['open', 'high', 'low', 'close',
-                            'hl', 'ol', 'ho', 'openinterest', 'volume'], axis=1)
+    r_features = data.drop(['open', 'high', 'low', 'close', 'hl', 'ol', 'ho', 'volume'], axis=1)
     # borrar columnas donde exista solo NAs
     r_features = r_features.dropna(axis='columns', how='all')
     # borrar renglones donde exista algun NA
@@ -300,3 +299,4 @@ def optimizacion(nuevos_features,features):
                     rf=r
                     print(af,rf)
     return selected, af, rf
+    
