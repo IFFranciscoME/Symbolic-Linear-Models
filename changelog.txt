@@ -42,6 +42,12 @@ Martes 26.01.2021
   ya que en los nuevos datos no se tiene la columna de openiterest.
 - Agregar en functions.py: data_trans para escalamiento y transformacion de datos
 - Agregar en data.py lista de parametros para features e hiperparametros para modelo
+- Cambiar en functions.py: Nombre de f_features a features
+- Quitar en main.py el uso de datos con Quandl
+- Cambiar en main.py: el orden del procesamiento y extener los comentarios
+
+- (pendiente) Agregar en functions.py: funcion para regresion (ols y ols-elasticnet)
+- (pendiente) Agregar en functions.py: funcion para clasificacion (logistica y logistica-elasticnet)
 
 - (pendiente) Agregar funcionalidad de optimizacion con algoritmos geneticos
 - (pendiente) Proponer 2 metricas nuevas para SymbolicTransformer (clasificacion y regresion)

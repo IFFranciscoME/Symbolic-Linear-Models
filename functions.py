@@ -12,13 +12,18 @@
 
 import numpy as np
 import pandas as pd
+import random
 from sympy import *
-from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
+
+from sklearn.linear_model import LinearRegression, ElasticNet, LogisticRegression
 from sklearn.preprocessing import StandardScaler, RobustScaler, MaxAbsScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
+
 from gplearn.genetic import SymbolicTransformer
 import gplearn as gpl
+
+from deap import base, creator, tools, algorithms
 
 
 # ---------------------------------------------------------------------------------- Data Transformation -- #
@@ -76,7 +81,7 @@ def data_trans(p_data, p_trans):
 # ---------------------------------------------------------------------------------- Feature Engineering -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def f_features(p_data, p_nmax):
+def features(p_data, p_nmax):
 
     # reasignar datos
     data = p_data.copy()
@@ -157,122 +162,185 @@ def f_features(p_data, p_nmax):
     return r_features
 
 
-# ---------------------------------------------------------- MODEL: Multivariate Linear Regression Model -- #
+# --------------------------------------------------- Logistic Regression with ElasticNet Regularization -- #
 # --------------------------------------------------------------------------------------------------------- #
 
-def mult_regression(p_x, p_y):
+def logistic_reg(p_data, p_model, p_params, p_iter):
+
     """
-    Funcion para ajustar varios modelos lineales
+    Logistic Regression with and without elastic net regularization for classification
 
     Parameters
     ----------
 
-    p_x: pd.DataFrame
-        with regressors or predictor variables
-        p_x = data_features.iloc[0:30, 3:]
+    p_data: pd.DataFrame
+        with x and y data
+        'x_train': explanatory variables in training set
+        'y_train': target variable in training set (numeric for regression, binary for classification)
+        'x_test': explanatory variables in test set
+        'y_test': target variable in test set (numeric for regression, binary for classification)
 
-    p_y: pd.DataFrame
-        with variable to predict
-        p_y = data_features.iloc[0:30, 1]
+    p_model: str
+        'logistic': logistic regression without regularization
+        'logistic_en': logistic regression with elastic net regularization
 
-    Returns
-    -------
-    r_models: dict
-        Diccionario con modelos ajustados
-
-    """
-
-    # Fit LINEAR regression
-    linreg = LinearRegression(normalize=False, fit_intercept=False)
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
-    linreg.fit(xtrain, ytrain)
-    y_p_linear = linreg.predict(xtrain)
-
-    # Return the result of the model
-    linear_model = {'rss': np.round(sum((y_p_linear - ytrain) ** 2), 4),
-                    'predict': y_p_linear,
-                    'model': linreg,
-                    'intercept': linreg.intercept_,
-                    'coef': linreg.coef_,
-                    'score': r2_score(ytrain, y_p_linear)}
-    return linear_model
-
-
-# -------------------------------- MODEL: Multivariate Linear Regression Models with L1L2 regularization -- #
-# --------------------------------------------------------------------------------------------------------- #
-
-def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter,l1_ratio):
-    """
-    Funcion para ajustar varios modelos lineales
-
-    Parameters
-    ----------
-
-    p_x: pd.DataFrame
-        with regressors or predictor variables
-        p_x = data_features.iloc[0:30, 3:]
-
-    p_y: pd.DataFrame
-        with variable to predict
-        p_y = data_features.iloc[0:30, 1]
-
-    p_alpha: float
-        alpha for the models
-        p_alpha = alphas[1e-3]
+    p_params: dict
+        any parameter that is needed for the model.
 
     p_iter: int
-        Number of iterations until stop the model fit process
-        p_iter = 1e6
+        number of iterations to perform
 
     Returns
     -------
-    r_models: dict
-        Diccionario con modelos ajustados
+
+        dict = {'rss': Residual Sum of Squares, 
+                'predict': model predictions,
+                'model': model object,
+                'intercept': intercept information,
+                'coef': model coefficients,
+                'score': fitness score (regression: R2, classification: Accuracy and AUC)}
+
+    References
+    ----------
+    https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
 
     """
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
-    # Fit RIDGE regression
-    ridgereg = Ridge(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
-    ridgereg.fit(xtrain, ytrain)
-    y_p_ridge = ridgereg.predict(xtrain)
 
-    # Fit LASSO regression
-    lassoreg = Lasso(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
-    lassoreg.fit(xtrain, ytrain)
-    y_p_lasso = lassoreg.predict(xtrain)
+    # Logistic regression without regularization
+    if p_model == 'logistic':
 
-    # Fit ElasticNet regression
-    enetreg = ElasticNet(alpha=p_alpha, normalize=False, max_iter=p_iter, l1_ratio=l1_ratio, fit_intercept=False)
-    enetreg.fit(xtrain, ytrain)
-    y_p_enet = enetreg.predict(xtrain)
+        # Model specification
+        logistic_model = LogisticRegression(l1_ratio=0, C=p_params['c'], tol=1e-3, penalty='none', 
+                                            olver='saga', multi_class='ovr', n_jobs=-1,
+                                            max_iter=p_iter, fit_intercept=False, random_state=123)
 
-    # RSS = residual sum of squares
+        # Model fit
+        logistic_model.fit(p_data['x_train'], p_data['y_train'])
 
-    # Return the result of the model
-    r_models = {"summary": {"Ridge rss": sum((y_p_ridge - ytrain) ** 2),
-                            "lasso rss": sum((y_p_lasso - ytrain) ** 2),
-                            "elasticnet rss": sum((y_p_enet - ytrain) ** 2)},
-                'ridge': {'rss': sum((y_p_ridge - ytrain) ** 2),
-                         'predict': y_p_ridge,
-                         'model': ridgereg,
-                         'intercept': ridgereg.intercept_,
-                         'coef': ridgereg.coef_,
-                         'score': r2_score(ytrain, y_p_ridge)},
-                'lasso': {'rss': sum((y_p_lasso - ytrain) ** 2),
-                          'predict': y_p_lasso,
-                          'model': lassoreg,
-                          'intercept': lassoreg.intercept_,
-                          'coef': lassoreg.coef_,
-                          'score': r2_score(ytrain, y_p_lasso)},
-                'elasticnet': {'rss': sum((y_p_enet - ytrain) ** 2),
-                               'predict': y_p_enet,
-                               'model': enetreg,
-                               'intercept': enetreg.intercept_,
-                               'coef': enetreg.coef_,
-                               'score': r2_score(ytrain, y_p_enet)}
-                }
+        # Model predict
+        y_logistic_model = logistic_model.predict(p_data['x_train'])
 
-    return r_models
+        # Model results
+        return {'rss': sum((y_logistic_model - p_data['y_train']) ** 2),
+                'predict': y_logistic_model,
+                'model': logistic_model,
+                'intercept': logistic_model.intercept_,
+                'coef': logistic_model.coef_,
+                'score': 'accuracy, auc'}
+
+    # Logistic regression with elastic net regularization
+    elif p_model == 'logistic_en':
+
+        # Model specification
+        logistic_en_model = LogisticRegression(l1_ratio=p_params['ratio'], C=p_params['c'], tol=1e-3,
+                                  penalty='elasticnet', solver='saga', multi_class='ovr', n_jobs=-1,
+                                  max_iter=p_iter, fit_intercept=False, random_state=123)
+        
+        # Model fit
+        logistic_en_model.fit(p_data['x_train'], p_data['y_train'])
+
+        # Model predict
+        y_logistic_en_model = logistic_en_model.predict(p_data['x_train'])
+
+        # Model results
+        return {'rss': sum((y_logistic_en_model - p_data['y_train']) ** 2),
+                'predict': y_logistic_en_model,
+                'model': logistic_en_model,
+                'intercept': logistic_en_model.intercept_,
+                'coef': logistic_en_model.coef_,
+                'score': 'accuracy, auc'}
+
+    else:
+        return 'error'
+
+
+# ------------------------------------------------------------ OLS Regression Models with Regularization -- #
+# --------------------------------------------------------------------------------------------------------- #
+
+def ols_reg(p_data, p_model, p_params, p_iter):
+    """
+    Ordinary Least Squares regression with and without elastic net regularization for regression
+
+    Parameters
+    ----------
+
+    p_data: pd.DataFrame
+        with x and y data
+        'x_train': explanatory variables in training set
+        'y_train': target variable in training set (numeric for regression, binary for classification)
+        'x_test': explanatory variables in test set
+        'y_test': target variable in test set (numeric for regression, binary for classification)
+
+    p_model: str
+        'ols': Ordinary Least Squares regression without regularization
+        'ols_en': Ordinary Least Squares regression with elastic net regularization
+
+    p_params: dict
+        any parameter that is needed for the model.
+
+    p_iter: int
+        number of iterations to perform
+
+    Returns
+    -------
+
+        dict = {'rss': Residual Sum of Squares, 
+                'predict': model predictions,
+                'model': model object,
+                'intercept': intercept information,
+                'coef': model coefficients,
+                'score': fitness score (regression: R2, classification: Accuracy and AUC)}
+
+    References
+    ----------
+    https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html
+      
+    """
+
+    # Ordinary Least Squares regression without regularization
+    if p_model == 'ols':
+
+        # Model specification
+        ols_model = LinearRegression(normalize=False, fit_intercept=False)
+
+        # Model fit
+        ols_model.fit(p_data['x_train'], p_data['y_train'])
+
+        # Model predict
+        y_ols_model = ols_model.predict(p_data['x_train'])
+
+        # Model results
+        return {'rss': sum((y_ols_model - p_data['y_train']) ** 2),
+                'predict': y_ols_model,
+                'model': ols_model,
+                'intercept': ols_model.intercept_,
+                'coef': ols_model.coef_,
+                'score': r2_score(p_data['y_train'], y_ols_model)}
+
+    # Ordinary Least Squares regression without regularization
+    elif p_model == 'ols_en':
+
+        # Model specification
+        ols_en_model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],    
+                                  it_intercept=False)
+
+        # Model fit
+        ols_en_model.fit(p_data['x_train'], p_data['y_train'])
+
+        # Model predict
+        y_ols_en_model = ols_en_model.predict(p_data['x_train'])
+
+        # Model results
+        return {'rss': sum((y_ols_en_model - p_data['y_train']) ** 2),
+                'predict': y_ols_en_model,
+                'model': ols_en_model,
+                'intercept': ols_en_model.intercept_,
+                'coef': ols_en_model.coef_,
+                'score': r2_score(p_data['y_train'], y_ols_en_model)}
+
+    else:
+        return 'error'
 
 
 # ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
@@ -314,41 +382,147 @@ def symbolic_features(p_x, p_y):
                                 p_point_mutation=0.1, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
                                 warm_start=True)
+
     xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
     model.fit_transform(xtrain, ytrain)
     model_params = model.get_params()
     gp_features = model.transform(p_x)
+    
     model_fit = np.hstack((p_x, gp_features))
     results = {'fit': model_fit, 'params': model_params, 'model': model}
     best_p = model._best_programs
     best_p_dict={}
+
     for p in best_p:
         factor_name = 'alpha_'+str(best_p.index(p)+1)
         best_p_dict[factor_name] = {'fitness': p.fitness_, "expression": str(p), 'depth': p.depth_,
                                     "length": p.length_}
+
     best_p_dict = pd.DataFrame(best_p_dict).T
     best_p_dict = best_p_dict.sort_values(by="fitness")
+
     return results, best_p_dict
 
 
-def optimizacion(nuevos_features,features):
-    alpha = [.1, .08, .06, .04, .02]
-    ratio = [0, .25, .5, .75, 1]
-    #lm_model_s = mult_regression(p_x=nuevos_features, p_y=features.iloc[:, 1])
-    for a in alpha:
-        for r in ratio:
-            lm_model_reg_s = mult_reg_l1l2(p_x=nuevos_features, p_y=features.iloc[:, 1],
-                                              p_alpha=a, p_iter=1e6, l1_ratio=r)
-            if a==.1 and r==0:
-                init = lm_model_reg_s['elasticnet']['rss']
-                selected = lm_model_reg_s
-                af = a
-                rf = r
-            else:
-                if lm_model_reg_s['elasticnet']['rss'] < init:
-                    selected = lm_model_reg_s
-                    af=a
-                    rf=r
-                    print(af,rf)
-    return selected, af, rf
-    
+# -------------------------------------------------------------------------- FUNCTION: Genetic Algorithm -- #
+# ------------------------------------------------------- ------------------------------------------------- #
+
+def optimization(p_data, p_model, p_params):
+    """
+    optimization with genetic algorithms
+
+    Parameters
+    ----------
+    p_data:  pd.DataFrame
+
+    p_model: str
+
+    p_params: dict
+
+
+    Returns
+    ----------
+
+
+    References
+    ----------
+    https://deap.readthedocs.io
+
+    """
+
+    # initialize genetic algorithm object
+    creator.create("FitnessMax_en", base.Fitness, weights=(1.0,))
+    creator.create("Individual_en", list, fitness=creator.FitnessMax_en)
+    toolbox_en = base.Toolbox()
+
+    # define how each gene will be generated (e.g. criterion is a random choice from the criterion list).
+    toolbox_en.register("attr_ratio", random.choice, p_model['params']['ratio'])
+    toolbox_en.register("attr_c", random.choice, p_model['params']['c'])
+
+    # This is the order in which genes will be combined to create a chromosome
+    toolbox_en.register("Individual_en", tools.initCycle, creator.Individual_en,
+                        (toolbox_en.attr_ratio, toolbox_en.attr_c), n=1)
+
+    # population definition
+    toolbox_en.register("population", tools.initRepeat, list, toolbox_en.Individual_en)
+
+    # -------------------------------------------------------------- funcion de mutacion para LS SVM -- #
+    def mutate_en(individual):
+
+        # select which parameter to mutate
+        gene = random.randint(0, len(p_model['params']) - 1)
+
+        if gene == 0:
+            individual[0] = random.choice(p_model['params']['ratio'])
+        elif gene == 1:
+            individual[1] = random.choice(p_model['params']['c'])
+
+        return individual,
+
+    # --------------------------------------------------- funcion de evaluacion para OLS Elastic Net -- #
+    def evaluate_en(eva_individual):
+
+        # output of genetic algorithm
+        chromosome = {'ratio': eva_individual[0], 'c': eva_individual[1]}
+
+        
+        if p_model == 'classification':
+
+            # model results
+            model = logistic_reg(p_data=p_data, p_params=chromosome)
+
+            # True positives in train data
+            train_tp = model['results']['matrix']['train'][0, 0]
+            # True negatives in train data
+            train_tn = model['results']['matrix']['train'][1, 1]
+            # Model accuracy
+            train_fit = (train_tp + train_tn) / len(model['results']['data']['train'])
+
+            # True positives in test data
+            test_tp = model['results']['matrix']['test'][0, 0]
+            # True negatives in test data
+            test_tn = model['results']['matrix']['test'][1, 1]
+            # Model accuracy
+            test_fit = (test_tp + test_tn) / len(model['results']['data']['test'])
+
+            # Fitness measure
+            model_fit = np.mean([train_fit, test_fit])
+
+            return model_fit,
+                
+        elif p_model == 'regression':
+            
+            model_fit = 1
+            # aqui va para el caso de regresion 
+
+            return model_fit,
+
+    toolbox_en.register("mate", tools.cxOnePoint)
+    toolbox_en.register("mutate", mutate_en)
+    toolbox_en.register("select", tools.selTournament, tournsize=10)
+    toolbox_en.register("evaluate", evaluate_en)
+
+    population_size = 50
+    crossover_probability = 0.8
+    mutation_probability = 0.1
+    number_of_generations = 4
+
+    en_pop = toolbox_en.population(n=population_size)
+    en_hof = tools.HallOfFame(10)
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", np.mean)
+    stats.register("std", np.std)
+    stats.register("min", np.min)
+    stats.register("max", np.max)
+
+    # Genetic Algorithm Implementation
+    en_pop, en_log = algorithms.eaSimple(population=en_pop, toolbox=toolbox_en, stats=stats,
+                                            cxpb=crossover_probability, mutpb=mutation_probability,
+                                            ngen=number_of_generations, halloffame=en_hof, verbose=True)
+
+    # transform the deap objects into list so it can be serialized and stored with pickle
+    en_pop = [list(pop) for pop in list(en_pop)]
+    en_log = [list(log) for log in list(en_log)]
+    en_hof = [list(hof) for hof in list(en_hof)]
+
+    return {'population': en_pop, 'logs': en_log, 'hof': en_hof}

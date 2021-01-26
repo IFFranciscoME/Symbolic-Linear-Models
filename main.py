@@ -21,12 +21,7 @@ pd.set_option('display.max_columns', None)                # sin limite de column
 pd.set_option('display.width', None)                      # sin limite el ancho del display
 pd.set_option('display.expand_frame_repr', False)         # visualizar todas las columnas
 
-# ------------------------------------------------------------------------------------------ Obtain data -- #
-
-# m6e : Micro Eur/Usd Future: https://www.cmegroup.com/trading/fx/e-micros/e-micro-euro.html
-# obtained with Quandl / Chris free data set. Gathers the data from webscraping cmegroup's future data
-# data = m6e1.tail(160)
-# data.tail()
+# -------------------------------------------------------------------------------------------- Read data -- #
 
 # train data (2011 to 2018) - Use any number of times
 data = ohlc_data['train']
@@ -58,7 +53,7 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
 # ingenieria de caracteristicas con variable endogena
-features = fn.f_features(p_data=data, p_nmax=7)
+features = fn.features(p_data=data, p_nmax=7)
 
 # Conjunto de entrenamiento
 
@@ -68,27 +63,40 @@ features = fn.f_features(p_data=data, p_nmax=7)
 cor_mat = features.iloc[:, 1:].corr()
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
+# -- With autoregressive and hadamard features
 
-# Multple linear regression model
-lm_model = fn.mult_regression(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-lm_model_reg = fn.mult_reg_l1l2(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1], p_alpha=1e-2, p_iter=1e6,
-                                l1_ratio=.25)
+# -- Ordinary Least Squares Model (Regression)
+
+# without regularization
+
+# with elastic net regularization
+
+# -- Logistic Regression Model (Classification)
+
+# without regularization
+
+# with elastic net regularization
+
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
 # semilla para siempre obtener el mismo resultado
 np.random.seed(879)
+
 # Generacion de muchos features formado con variables simbolica
 symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
 nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
+# -- With autoregressive and hadamard features and symbolic features
 
-# Multple linear regression model
-selected, af, rf=fn.optimizacion(nuevos_features, features)
-#.02 alpha 1 ratio
+# -- Ordinary Least Squares Model (Regression)
 
-print('Modelo Lineal 1: rss: ', lm_model['rss'])
-print('Modelo Lineal 1: score: ', lm_model['score'])
-# RSS of the model with all the variables
-print('Modelo Lineal simbolico y con regularización: rss: ', selected['elasticnet']['rss'])
-print('Modelo Lineal simbolico y con regularización: score: ', selected['elasticnet']['score'])
+# without regularization
+
+# with elastic net regularization
+
+# -- Logistic Regression Model (Classification)
+
+# without regularization
+
+# with elastic net regularization
