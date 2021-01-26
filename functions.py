@@ -14,11 +14,63 @@ import numpy as np
 import pandas as pd
 from sympy import *
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
-from sklearn.preprocessing import StandardScaler       # estandarizacion de variables
+from sklearn.preprocessing import StandardScaler, RobustScaler, MaxAbsScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
-from gplearn.genetic import SymbolicTransformer          # regresion simbolica
+from gplearn.genetic import SymbolicTransformer
 import gplearn as gpl
+
+
+# ---------------------------------------------------------------------------------- Data Transformation -- #
+# ---------------------------------------------------------------------------------- ------------------- -- #
+
+def data_trans(p_data, p_trans):
+    """
+    Scale the data according to the choosen function, scales all the columns in the input data
+
+    Parameters
+    ----------
+    p_trans: str
+        Standard: Standardize features by removing the mean and scaling to unit variance
+        Robust: Scale features using statistics that are robust to outliers
+        MaxAbs: Scale each feature by its maximum absolute value
+
+    p_datos: pd.DataFrame
+        with data to be transformed
+
+    Returns
+    -------
+    p_datos: pd.DataFrame
+        with output data transformed
+
+    References
+    ----------
+    
+    https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.MaxAbsScaler.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+
+    """
+
+    if p_trans == 'Standard':
+
+        # Standardize features by removing the mean and scaling to unit variance
+        lista = p_data[list(p_data.columns[1:])]
+        p_data[list(p_data.columns[1:])] = StandardScaler().fit_transform(lista)
+
+    elif p_trans == 'Robust':
+
+        # Scale features using statistics that are robust to outliers
+        lista = p_data[list(p_data.columns[1:])]
+        p_data[list(p_data.columns[1:])] = RobustScaler().fit_transform(lista)
+
+    elif p_trans == 'MaxAbs':
+
+        # Scale each feature by its maximum absolute value
+        lista = p_data[list(p_data.columns[1:])]
+        p_data[list(p_data.columns[1:])] = MaxAbsScaler().fit_transform(lista)
+
+    return p_data
 
 
 # ---------------------------------------------------------------------------------- Feature Engineering -- #

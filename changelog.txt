@@ -39,6 +39,7 @@ Martes 26.01.2021
 - Cambiar los precios historicos por archivo de firstrate con resampleo
 - Agregar indicativo de separacion 'Train: 2010-2018, Test: 2019, Validate: 2020'
 - Cambiar calculos de features con openiterest a volume (en nvos datos no hay openiterest)
+- Agregar funcion de escalamiento y transformacion de datos
 
 - (pendiente) Verificar lista de parametros para optimizar
 - (pendiente) Agregar funcionalidad de optimizacion con algoritmos geneticos
