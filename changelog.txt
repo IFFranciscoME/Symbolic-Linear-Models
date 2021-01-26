@@ -31,3 +31,10 @@ Viernes 30.10.2020
 
 - Se hizo el proceso de generacion de variable explicativa desde data.py
 - Se separaron los conjuntos de entrenamiento y prueba en data.py
+
+Viernes 22.01.2021
+- Modificacion y acomodo de folders del proyecto
+
+Martes 26.01.2021
+- (pendiente) Cambiar los precios historicos por archivo de firstrate con resampleo
+- (pendiente) Agregar funcionalidad de optimizacion con algoritmos geneticos

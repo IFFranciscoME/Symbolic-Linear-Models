@@ -15,7 +15,7 @@ symbolic_regression.code-workspace
 symbolic_regression_venv/
 
 # -- Exclude files folder (sometimes is useful not to exclude it)
-files/
+# files/
 
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
