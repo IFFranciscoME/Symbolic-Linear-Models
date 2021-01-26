@@ -135,15 +135,15 @@ def mult_regression(p_x, p_y):
     linreg = LinearRegression(normalize=False, fit_intercept=False)
     xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
     linreg.fit(xtrain, ytrain)
-    y_p_linear = linreg.predict(xtest)
+    y_p_linear = linreg.predict(xtrain)
 
     # Return the result of the model
-    linear_model = {'rss': np.round(sum((y_p_linear - ytest) ** 2), 4),
+    linear_model = {'rss': np.round(sum((y_p_linear - ytrain) ** 2), 4),
                     'predict': y_p_linear,
                     'model': linreg,
                     'intercept': linreg.intercept_,
                     'coef': linreg.coef_,
-                    'score': r2_score(ytest, y_p_linear)}
+                    'score': r2_score(ytrain, y_p_linear)}
     return linear_model
 
 
@@ -183,42 +183,42 @@ def mult_reg_l1l2(p_x, p_y, p_alpha, p_iter,l1_ratio):
     # Fit RIDGE regression
     ridgereg = Ridge(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
     ridgereg.fit(xtrain, ytrain)
-    y_p_ridge = ridgereg.predict(xtest)
+    y_p_ridge = ridgereg.predict(xtrain)
 
     # Fit LASSO regression
     lassoreg = Lasso(alpha=p_alpha, normalize=False, max_iter=p_iter, fit_intercept=False)
     lassoreg.fit(xtrain, ytrain)
-    y_p_lasso = lassoreg.predict(xtest)
+    y_p_lasso = lassoreg.predict(xtrain)
 
     # Fit ElasticNet regression
     enetreg = ElasticNet(alpha=p_alpha, normalize=False, max_iter=p_iter, l1_ratio=l1_ratio, fit_intercept=False)
     enetreg.fit(xtrain, ytrain)
-    y_p_enet = enetreg.predict(xtest)
+    y_p_enet = enetreg.predict(xtrain)
 
     # RSS = residual sum of squares
 
     # Return the result of the model
-    r_models = {"summary": {"Ridge rss": sum((y_p_ridge - ytest) ** 2),
-                            "lasso rss": sum((y_p_lasso - ytest) ** 2),
-                            "elasticnet rss": sum((y_p_enet - ytest) ** 2)},
-                'ridge': {'rss': sum((y_p_ridge - ytest) ** 2),
+    r_models = {"summary": {"Ridge rss": sum((y_p_ridge - ytrain) ** 2),
+                            "lasso rss": sum((y_p_lasso - ytrain) ** 2),
+                            "elasticnet rss": sum((y_p_enet - ytrain) ** 2)},
+                'ridge': {'rss': sum((y_p_ridge - ytrain) ** 2),
                          'predict': y_p_ridge,
                          'model': ridgereg,
                          'intercept': ridgereg.intercept_,
                          'coef': ridgereg.coef_,
-                         'score': r2_score(ytest, y_p_ridge)},
-                'lasso': {'rss': sum((y_p_lasso - ytest) ** 2),
+                         'score': r2_score(ytrain, y_p_ridge)},
+                'lasso': {'rss': sum((y_p_lasso - ytrain) ** 2),
                           'predict': y_p_lasso,
                           'model': lassoreg,
                           'intercept': lassoreg.intercept_,
                           'coef': lassoreg.coef_,
-                          'score': r2_score(ytest, y_p_lasso)},
-                'elasticnet': {'rss': sum((y_p_enet - ytest) ** 2),
+                          'score': r2_score(ytrain, y_p_lasso)},
+                'elasticnet': {'rss': sum((y_p_enet - ytrain) ** 2),
                                'predict': y_p_enet,
                                'model': enetreg,
                                'intercept': enetreg.intercept_,
                                'coef': enetreg.coef_,
-                               'score': r2_score(ytest, y_p_enet)}
+                               'score': r2_score(ytrain, y_p_enet)}
                 }
 
     return r_models
@@ -278,3 +278,25 @@ def symbolic_features(p_x, p_y):
     best_p_dict = pd.DataFrame(best_p_dict).T
     best_p_dict = best_p_dict.sort_values(by="fitness")
     return results, best_p_dict
+
+
+def optimizacion(nuevos_features,features):
+    alpha = [.1, .08, .06, .04, .02]
+    ratio = [0, .25, .5, .75, 1]
+    #lm_model_s = mult_regression(p_x=nuevos_features, p_y=features.iloc[:, 1])
+    for a in alpha:
+        for r in ratio:
+            lm_model_reg_s = mult_reg_l1l2(p_x=nuevos_features, p_y=features.iloc[:, 1],
+                                              p_alpha=a, p_iter=1e6, l1_ratio=r)
+            if a==.1 and r==0:
+                init = lm_model_reg_s['elasticnet']['rss']
+                selected = lm_model_reg_s
+                af = a
+                rf = r
+            else:
+                if lm_model_reg_s['elasticnet']['rss'] < init:
+                    selected = lm_model_reg_s
+                    af=a
+                    rf=r
+                    print(af,rf)
+    return selected, af, rf
