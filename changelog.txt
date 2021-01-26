@@ -36,12 +36,13 @@ Viernes 22.01.2021
 - Modificacion y acomodo de folders del proyecto
 
 Martes 26.01.2021
-- Cambiar los precios historicos por archivo de firstrate con resampleo
-- Agregar indicativo de separacion 'Train: 2010-2018, Test: 2019, Validate: 2020'
-- Cambiar calculos de features con openiterest a volume (en nvos datos no hay openiterest)
-- Agregar funcion de escalamiento y transformacion de datos
+- Cambiar en data.py los precios historicos por archivo de firstrate con resampleo
+- Agregar en main.py y data.py indicativo de separacion 'Train: 2010-2018, Test: 2019, Validate: 2020'
+- Cambiar en functions.py: f_features  para calculos de features con volume en lugar de openiterest
+  ya que en los nuevos datos no se tiene la columna de openiterest.
+- Agregar en functions.py: data_trans para escalamiento y transformacion de datos
+- Agregar en data.py lista de parametros para features e hiperparametros para modelo
 
-- (pendiente) Verificar lista de parametros para optimizar
 - (pendiente) Agregar funcionalidad de optimizacion con algoritmos geneticos
 - (pendiente) Proponer 2 metricas nuevas para SymbolicTransformer (clasificacion y regresion)
 - (pendiente) Graficas y tablas para visualizacion de performance (clasificacion y regresion)

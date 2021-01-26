@@ -11,6 +11,7 @@
 """
 
 import pandas as pd
+import numpy as np
 from os import listdir, path
 from os.path import isfile, join
 import quandl as quandl
@@ -77,3 +78,20 @@ val_data = price_data[list(price_data.keys())[9]]
 
 # historical data 
 ohlc_data = {'train': train_data, 'test': test_data, 'val': val_data}
+
+# --------------------------------------------------------------------- Parameters for Symbolic Features -- #
+# --------------------------------------------------------------------- -------------------------------- -- #
+
+symbolic_params = {'functions': ["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'],
+                   'population': 5000, 'tournament':20, 'hof': 20, 'generations': 5, 'n_features':10,
+                   'init_depth': (4,8), 'init_method': 'half and half', 'parsimony': 0, 'constants': None,
+                   'metric': 'pearson', 'metric_goal': 0.65, 
+                   'prob_cross': 0.4, 'prob_mutation_subtree': 0.3,
+                   'prob_mutation_hoist': 0.1, 'prob_mutation_point': 0.2,
+                   'verbose': True, 'parallelization': True, 'warm_start': True}
+
+# ------------------------------------------------------------------------ Hyperparameters for the Model -- #
+# ------------------------------------------------------------------------ ----------------------------- -- #
+
+# 100 different values for each parameter
+model_params = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(0, 2, 0.02)}
