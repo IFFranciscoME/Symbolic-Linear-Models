@@ -74,12 +74,12 @@ cor_mat = data.iloc[:, 1:].corr()
 # -- Ordinary Least Squares Model (Regression)
 
 # without regularization
-# data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
-#                           p_model='ols', p_iter=1000)
+data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
+                          p_model='ols', p_iter=1000)
 
 # with elastic net regularization
-# data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
-#                           p_model='ols_en', p_iter=1000)
+data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
+                          p_model='ols_en', p_iter=1000)
 
 # -- Logistic Regression Model (Classification)
 
