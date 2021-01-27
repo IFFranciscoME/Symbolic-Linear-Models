@@ -6,13 +6,13 @@
 .idea/
 
 # -- Exclude vscode workspace folder
-symbolic_regression.code-workspace
+symbolic_models.code-workspace
 
 # -- Exclude vscode settings folder
 .vscode/
 
 # -- Exclude virtual environment
-symbolic_regression_venv/
+symbolic_models_venv/
 
 # -- Exclude files folder (sometimes is useful not to exclude it)
 # files/

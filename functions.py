@@ -58,23 +58,26 @@ def data_trans(p_data, p_trans):
 
     """
 
-    if p_trans == 'Standard':
+    # keep the column names
+    cols = list(p_data.columns)
 
+    if p_trans == 'Standard':
+        
         # Standardize features by removing the mean and scaling to unit variance
-        lista = p_data[list(p_data.columns[1:])]
-        p_data[list(p_data.columns[1:])] = StandardScaler().fit_transform(lista)
+        p_data = pd.DataFrame(StandardScaler().fit_transform(p_data))
+        p_data.columns = cols
 
     elif p_trans == 'Robust':
 
         # Scale features using statistics that are robust to outliers
-        lista = p_data[list(p_data.columns[1:])]
-        p_data[list(p_data.columns[1:])] = RobustScaler().fit_transform(lista)
+        p_data = pd.DataFrame(RobustScaler().fit_transform(p_data))
+        p_data.columns = cols
 
     elif p_trans == 'MaxAbs':
 
         # Scale each feature by its maximum absolute value
-        lista = p_data[list(p_data.columns[1:])]
-        p_data[list(p_data.columns[1:])] = MaxAbsScaler().fit_transform(lista)
+        p_data = pd.DataFrame(MaxAbsScaler().fit_transform(p_data))
+        p_data.columns = cols
 
     return p_data
 
@@ -160,7 +163,13 @@ def features(p_data, p_nmax):
     # resetear index
     r_features.reset_index(inplace=True, drop=True)
 
-    return r_features
+    # columns names modification for numeric values (only x_features)
+    features_names = r_features.columns
+    names = np.arange(3, len(r_features.iloc[3,]), 1)
+    str_names = [str(i) for i in names]
+    r_features.columns = features_names[0:3].to_list() + str_names
+
+    return r_features, features_names.to_list()
 
 
 # -- --------------------------------------------------------------------- Metrics for Model Performance -- # 
@@ -380,8 +389,9 @@ def ols_reg(p_data, p_model, p_params, p_iter):
     return model_metrics(p_model=model, p_data=p_data, p_type='regression')
 
 
-# ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
+# ------------------------------------------------------------------------- Symbolic Features Generation -- #
 # --------------------------------------------------------------------------------------------------------- #
+
 def symbolic_features(p_x, p_y):
     """
     Funcion para crear regresores no lineales

@@ -16,10 +16,10 @@ import functions as fn
 from data import ohlc_data, params
 from visualizations import vs
 
-pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
-pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
-pd.set_option('display.width', None)                      # sin limite el ancho del display
-pd.set_option('display.expand_frame_repr', False)         # visualizar todas las columnas
+# pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
+# pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
+# pd.set_option('display.width', None)                      # sin limite el ancho del display
+# pd.set_option('display.expand_frame_repr', False)         # visualizar todas las columnas
 
 # -------------------------------------------------------------------------------------------- Read data -- #
 
@@ -52,52 +52,85 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
-# Data scaling
-data = fn.data_trans(p_data=data, p_trans='Robust')
-
 # Feature engineering (autoregressive and hadamard functions)
-data = fn.features(p_data=data, p_nmax=7)
+data, features_names = fn.features(p_data=data, p_nmax=7)
 
-# rearange of data for regression model
-data_reg = {'x_data': data[data.columns[3:-1]], 'y_data': data[data.columns[1]]}
+# Datetime
+data_t = data[data.columns[0]]
+# Target variables (co: regression, co_d: classification)
+data_y = data[list(data.columns[1:3])]
+# Autoregressive and hadamard features
+data_x = data[list(data.columns[3:])]
 
-# rearange of data for classification model
-data_cla = {'x_data': data[data.columns[3:-1]], 'y_data': data[data.columns[2]]}
+# Data scaling
+data_x = fn.data_trans(p_data=data_x, p_trans='Robust')
+
+# Rearange of data for regression model
+data_reg = {'x_data': data_x, 'y_data': data_y['co']}
+
+# Rearange of data for classification model
+data_cla = {'x_data': data_x, 'y_data': data_y['co_d']}
+
 # -- ---------------------------------------------------------------------------------- Feature analysis -- #
 
 # matriz de correlacion
-cor_mat = data.iloc[:, 1:].corr()
+cor_mat = data_x.corr()
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 # -- With autoregressive and hadamard features
 
-# -- Ordinary Least Squares Model (Regression)
+# -- ---------------------------------------------------- Regression Model: Ordinary Least Squares Model -- # 
 
-# without regularization
+# -- without regularization
+
+# optimization
 data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
                           p_model='ols', p_iter=1000)
 
-# with elastic net regularization
+# in sample results
+
+# out of sample results
+
+# -- with elasticnet regularization
+
+# optimization
 data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
-                          p_model='ols_en', p_iter=1000)
+                          p_model='ols_en', p_iter=2000)
 
-# -- Logistic Regression Model (Classification)
+# in sample results
 
-# without regularization
+# out of sample results
+
+# -- --------------------------------------------------- Classification Model: Logistic Regression Model -- # 
+
+# -- without regularization
+
+# optimization
 data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
                           p_model='logistic', p_iter=500)
 
-# with elastic net regularization
+# in sample results
+
+# out of sample results
+
+# -- with elastic net regularization
+
+# optimization
 data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
                           p_model='logistic_en', p_iter=500)
 
-# -- ------------------------------------------------------------------------------- Features simbolicos -- #
+# in sample results
+
+# out of sample results
+
+# -- --------------------------------------------------------------------------------- Symbolic Features -- #
 
 # semilla para siempre obtener el mismo resultado
 # np.random.seed(123)
 
-# Generacion de muchos features formado con variables simbolica
+# Symbolic features generation
 # symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
+
 # nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #

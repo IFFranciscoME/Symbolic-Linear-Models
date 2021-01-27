@@ -50,7 +50,16 @@ Martes 26.01.2021
 - Agregar funcionalidad de optimizacion con algoritmos geneticos
 - Cambiar en varios scripts que los datos solo sean x_data y y_data en lugar de x_train/y_train x_test/y_test
 
-- (pendiente) acomodar todo en main.py para correr el proceso completo para 4 variaciones de modelos
-              ols, ols_en, logistic, logitstic_en sin features symbolicas
-- (pendiente) Proponer 2 metricas nuevas para SymbolicTransformer (clasificacion y regresion)
-- (pendiente) Graficas y tablas para visualizacion de performance (clasificacion y regresion)
+Miercoles 23.01.2021
+- cambiar en functions.py data_trans para hacer transformacion a solo X y no las Y
+- cambiar todo en main.py para correr el proceso completo para 4 variaciones de modelos
+  ols, ols_en, logistic, logitstic_en sin features symbolicas
+
+- (pendiente) correr codigo para que haya resultados in sample y out of sample para regresion y clasificacion
+  utilizando variables sin features symbolicas
+- (pendiente) hacer analisis y graficas de resultados para mostrar lo obtenido
+- (pendiente) completar codigo para generar features symbolicas 
+- (pendiente) correr codigo para que haya resultados in sample y out of sample para regresion y clasificacion
+  utilizando variables con features symbolicas
+- (pendiente) hacer analisis y graficas de resultados para mostrar lo obtenido
+- (pendiente) hacer analisis y graficas de comparaciones entre todo
