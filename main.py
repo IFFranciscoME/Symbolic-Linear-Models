@@ -13,7 +13,7 @@
 import pandas as pd
 import numpy as np
 import functions as fn
-from data import ohlc_data
+from data import ohlc_data, params
 from visualizations import vs
 
 pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
@@ -52,15 +52,21 @@ ohlc = vs['g_ohlc'](p_ohlc=data, p_theme=p_theme, p_dims=p_dims, p_vlines=p_vlin
 
 # -- ------------------------------------------------------------------------------- Feature Engineering -- #
 
-# ingenieria de caracteristicas con variable endogena
-features = fn.features(p_data=data, p_nmax=7)
+# Data scaling
+data = fn.data_trans(p_data=data, p_trans='Robust')
 
-# Conjunto de entrenamiento
+# Feature engineering (autoregressive and hadamard functions)
+data = fn.features(p_data=data, p_nmax=7)
 
+# rearange of data for regression model
+data_reg = {'x_data': data[data.columns[3:-1]], 'y_data': data[data.columns[1]]}
+
+# rearange of data for classification model
+data_cla = {'x_data': data[data.columns[3:-1]], 'y_data': data[data.columns[2]]}
 # -- ---------------------------------------------------------------------------------- Feature analysis -- #
 
 # matriz de correlacion
-cor_mat = features.iloc[:, 1:].corr()
+cor_mat = data.iloc[:, 1:].corr()
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 # -- With autoregressive and hadamard features
@@ -68,23 +74,31 @@ cor_mat = features.iloc[:, 1:].corr()
 # -- Ordinary Least Squares Model (Regression)
 
 # without regularization
+# data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
+#                           p_model='ols', p_iter=1000)
 
 # with elastic net regularization
+# data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
+#                           p_model='ols_en', p_iter=1000)
 
 # -- Logistic Regression Model (Classification)
 
 # without regularization
+data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
+                          p_model='logistic', p_iter=500)
 
 # with elastic net regularization
+data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
+                          p_model='logistic_en', p_iter=500)
 
 # -- ------------------------------------------------------------------------------- Features simbolicos -- #
 
 # semilla para siempre obtener el mismo resultado
-np.random.seed(879)
+# np.random.seed(123)
 
 # Generacion de muchos features formado con variables simbolica
-symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
+# symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
+# nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 # -- With autoregressive and hadamard features and symbolic features

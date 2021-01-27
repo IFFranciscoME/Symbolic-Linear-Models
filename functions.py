@@ -228,8 +228,8 @@ def model_metrics(p_model, p_data, p_type):
         return {'model': p_model,
                 'results': {'x_data': p_data['x_data'], 'y_data': p_data['y_data'], 'y_data_p': y_model_data},
 
-                'metrics': {'rss': sum((y_model_data - p_data['y_train']) ** 2), 'coef': p_model.coef_,
-                            'r2': r2_score(p_data['y_data'], p_model), 'intercept': p_model.intercept_}}
+                'metrics': {'rss': sum((y_model_data - p_data['y_data']) ** 2), 'coef': p_model.coef_,
+                            'r2': r2_score(p_data['y_data'], y_model_data), 'intercept': p_model.intercept_}}
 
     else:
         return 'error: invalid type of model'
@@ -286,8 +286,8 @@ def logistic_reg(p_data, p_model, p_params, p_iter):
     if p_model == 'logistic':
 
         # Model specification
-        model = LogisticRegression(l1_ratio=0, C=p_params['c'], tol=1e-3, penalty='none', 
-                                   olver='saga', multi_class='ovr', n_jobs=-1,
+        model = LogisticRegression(tol=1e-3, 
+                                   solver='saga', multi_class='ovr', n_jobs=-1,
                                    max_iter=p_iter, fit_intercept=False, random_state=123)
         
     # Logistic regression with elastic net regularization
@@ -306,7 +306,7 @@ def logistic_reg(p_data, p_model, p_params, p_iter):
     model.fit(p_data['x_data'], p_data['y_data'])
 
     # performance metrics of the model
-    return model_metrics(p_model=model, p_data=p_data)
+    return model_metrics(p_model=model, p_data=p_data, p_type='classification')
 
 
 # ------------------------------------------------------------ OLS Regression Models with Regularization -- #
@@ -367,7 +367,7 @@ def ols_reg(p_data, p_model, p_params, p_iter):
 
         # Model specification
         model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],    
-                           it_intercept=False)
+                           fit_intercept=False)
 
     # error in model key
     else:
@@ -377,7 +377,7 @@ def ols_reg(p_data, p_model, p_params, p_iter):
     model.fit(p_data['x_data'], p_data['y_data'])
 
     # performance metrics of the model
-    return model_metrics(p_model=model, p_data=p_data)
+    return model_metrics(p_model=model, p_data=p_data, p_type='regression')
 
 
 # ------------------------------------------------------------------ MODEL: Symbolic Features Generation -- #
@@ -442,7 +442,7 @@ def symbolic_features(p_x, p_y):
 # -------------------------------------------------------------------------- FUNCTION: Genetic Algorithm -- #
 # ------------------------------------------------------- ------------------------------------------------- #
 
-def optimization(p_data, p_model, p_params):
+def optimization(p_data, p_model, p_type, p_params, p_iter):
     """
     optimization with genetic algorithms
 
@@ -464,6 +464,13 @@ def optimization(p_data, p_model, p_params):
     https://deap.readthedocs.io
 
     """
+
+    # Delete, if exists, genetic algorithm functional classes
+    try:
+        del creator.FitnessMax_en
+        del creator.Individual_en
+    except AttributeError:
+        pass
 
     # Initialize genetic algorithm object
     creator.create("FitnessMax_en", base.Fitness, weights=(1.0,))
@@ -501,10 +508,10 @@ def optimization(p_data, p_model, p_params):
         chromosome = {'ratio': eva_individual[0], 'c': eva_individual[1]}
 
         # evaluation with fitness metric for classification model
-        if p_model == 'classification':
+        if p_type == 'classification':
 
             # model results
-            model = logistic_reg(p_data=p_data, p_params=chromosome)
+            model = logistic_reg(p_data=p_data, p_params=chromosome, p_model=p_model, p_iter=p_iter)
 
             # fitness measure
             model_fit = model['metrics']['auc']
@@ -513,13 +520,13 @@ def optimization(p_data, p_model, p_params):
             return model_fit,
 
         # evaluation with fitness metric for regression model
-        elif p_model == 'regression':
+        elif p_type == 'regression':
             
            # model results
-            model = ols_reg(p_data=p_data, p_params=chromosome)
+            model = ols_reg(p_data=p_data, p_params=chromosome, p_model=p_model, p_iter=p_iter)
 
             # Fitness measure
-            model_fit = model['metrics']['rss']
+            model_fit = model['metrics']['r2']
 
             # always return a tupple
             return model_fit,
