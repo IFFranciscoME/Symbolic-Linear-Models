@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import random
 from sympy import *
-
+from statsmodels.stats.diagnostic import het_arch
 from sklearn.linear_model import LinearRegression, ElasticNet, LogisticRegression
 from sklearn.preprocessing import StandardScaler, RobustScaler, MaxAbsScaler
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_auc_score, roc_curve
@@ -375,7 +375,7 @@ def ols_reg(p_data, p_model, p_params, p_iter):
     elif p_model == 'ols_en':
 
         # Model specification
-        model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],    
+        model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],
                            fit_intercept=False)
 
     # error in model key
@@ -412,12 +412,6 @@ def symbolic_features(p_x, p_y):
         error of prediction
 
     """
-
-    # -- metric to measure performance
-    def _rss(y, y_pred, w):
-        diffs = (y - y_pred) ** 2
-        return np.sum(diffs)
-
     model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log', 'max', 'min'],
                                 population_size=1000, hall_of_fame=100, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
@@ -427,9 +421,7 @@ def symbolic_features(p_x, p_y):
                                 p_point_mutation=0.1, p_point_replace=.05,
                                 verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
                                 warm_start=True)
-
-    xtrain, xtest, ytrain, ytest = train_test_split(p_x, p_y, test_size=.2, shuffle=False)
-    model.fit_transform(xtrain, ytrain)
+    model.fit_transform(p_x, p_y)
     model_params = model.get_params()
     gp_features = model.transform(p_x)
 
@@ -574,3 +566,26 @@ def optimization(p_data, p_model, p_type, p_params, p_iter):
     en_hof = [list(hof) for hof in list(en_hof)]
 
     return {'population': en_pop, 'logs': en_log, 'hof': en_hof}
+
+
+# Prueba de heterodasticidad de los residuos
+
+
+def check_hetero(param_data):
+    """
+    Funcion que verifica si los residuos de una estimacion son heterosedasticos
+    Parameters
+    ---------
+    param_data: DataFrame: DataFrame que contiene residuales
+    ---------
+    norm: boolean: indica true si los datos presentan heterodasticidad, o false si no la presentan.
+    Debuggin
+    ---------
+    check_hetero(datos_residuales)
+    """
+    # arch test
+    heterosced = het_arch(param_data)
+    alpha = .05  # intervalo de 95% de confianza
+    # si p-value menor a alpha se concluye que no hay heterodasticidad
+    heter = True if heterosced[1] > alpha else False
+    return heter

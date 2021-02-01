@@ -12,9 +12,11 @@
 
 import pandas as pd
 import numpy as np
+import matplotlib. pyplot as plt
 import functions as fn
 from data import ohlc_data, params
 from visualizations import vs
+import visualizations as vis
 
 # pd.set_option('display.max_rows', None)                   # sin limite de renglones maximos
 # pd.set_option('display.max_columns', None)                # sin limite de columnas maximas
@@ -83,22 +85,24 @@ cor_mat = data_x.corr()
 
 # -- without regularization
 
-# optimization
-data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
-                          p_model='ols', p_iter=1000)
-
 # in sample results
-
+reg_1 = fn.ols_reg(p_data=data_reg, p_params=params, p_model="ols", p_iter=1000)
+residuales_1 = reg_1['results']['y_data']-reg_1['results']['y_data_p']
+hetero_1 = fn.check_hetero(residuales_1)
+vis.residual(residuales=residuales_1)
 # out of sample results
 
 # -- with elasticnet regularization
 
 # optimization
 data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
-                          p_model='ols_en', p_iter=2000)
-
+                          p_model='ols_en', p_iter=100000)
 # in sample results
-
+new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+reg_2 = fn.ols_reg(p_data=data_reg, p_params=new_params, p_model="ols_en", p_iter=100000)
+residuales_2 = reg_2['results']['y_data']-reg_2['results']['y_data_p']
+hetero_2 = fn.check_hetero(residuales_2)
+vis.residual(residuales=residuales_2)
 # out of sample results
 
 # -- --------------------------------------------------- Classification Model: Logistic Regression Model -- # 
@@ -126,12 +130,12 @@ data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=par
 # -- --------------------------------------------------------------------------------- Symbolic Features -- #
 
 # semilla para siempre obtener el mismo resultado
-# np.random.seed(123)
+np.random.seed(987)
 
 # Symbolic features generation
-# symbolic, table = fn.symbolic_features(p_x=features.iloc[:, 3:], p_y=features.iloc[:, 1])
-
-# nuevos_features = pd.DataFrame(symbolic['fit'], index=features.index)
+symbolic, table = fn.symbolic_features(p_x=data_reg['x_data'], p_y=data_reg['y_data'])
+x_simbolic = pd.DataFrame(symbolic['fit'], index=data_reg['x_data'].index)
+data_reg_sim = {'x_data': x_simbolic, 'y_data': data_y['co']}
 
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 # -- With autoregressive and hadamard features and symbolic features
@@ -139,8 +143,21 @@ data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=par
 # -- Ordinary Least Squares Model (Regression)
 
 # without regularization
+reg_5 = fn.ols_reg(p_data=data_reg_sim, p_params=params, p_model="ols", p_iter=1000)
+residuales_5 = reg_5['results']['y_data']-reg_5['results']['y_data_p']
+hetero_5 = fn.check_hetero(residuales_5)
+vis.residual(residuales=residuales_5)
 
 # with elastic net regularization
+
+data_op = fn.optimization(p_data=data_reg_sim, p_type='regression', p_params=params,
+                          p_model='ols_en', p_iter=100000)
+# in sample results
+new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+reg_6 = fn.ols_reg(p_data=data_reg_sim, p_params=new_params, p_model="ols_en", p_iter=100000)
+residuales_6 = reg_6['results']['y_data']-reg_6['results']['y_data_p']
+hetero_6 = fn.check_hetero(residuales_6)
+vis.residual(residuales=residuales_6)
 
 # -- Logistic Regression Model (Classification)
 

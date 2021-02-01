@@ -63,3 +63,9 @@ Miercoles 23.01.2021
   utilizando variables con features symbolicas
 - (pendiente) hacer analisis y graficas de resultados para mostrar lo obtenido
 - (pendiente) hacer analisis y graficas de comparaciones entre todo
+
+
+Domingo 31-01-2020:
+-Función para checar heterocedasticidad
+-Funcion para visualizar residuales
+- Mejor modelo optimizado in sample para regresión con y sin variables simbólicas
