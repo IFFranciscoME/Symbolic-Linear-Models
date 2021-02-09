@@ -13,6 +13,7 @@
 import requests
 import plotly.io as pio
 import plotly.graph_objects as go
+import pandas.plotting as cor
 pio.renderers.default = "browser"
 
 # ----------------------------------------------------------------- GIST 1: Data Visualization in Python -- #
@@ -26,3 +27,7 @@ def residual(residuales):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=residuales.index, y=residuales, mode='lines'))
     fig.show()
+
+
+def correlation(data):
+    return cor.scatter_matrix(data, diagonal='kde', alpha=0.8, figsize=(20, 20))

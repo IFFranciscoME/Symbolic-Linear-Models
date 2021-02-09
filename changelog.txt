@@ -69,3 +69,5 @@ Domingo 31-01-2020:
 -Función para checar heterocedasticidad
 -Funcion para visualizar residuales
 - Mejor modelo optimizado in sample para regresión con y sin variables simbólicas
+- cambio hiperparametros simbolic features
+- visualziación de distribuciones variables simbolicas
