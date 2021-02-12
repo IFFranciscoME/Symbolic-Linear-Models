@@ -412,9 +412,9 @@ def symbolic_features(p_x, p_y):
         error of prediction
 
     """
-    model = SymbolicTransformer(function_set=['inv', 'mul', 'div', 'abs', 'log', 'max', 'min'],
+    model = SymbolicTransformer(function_set=['inv', 'mul', 'div', 'abs', 'log', "min"],
                                 population_size=1000, hall_of_fame=150, n_components=15,
-                                generations=30, tournament_size=30,  stopping_criteria=.05,
+                                generations=20, tournament_size=20,  stopping_criteria=.05,
                                 const_range=None, init_method='half and half', init_depth=(4, 16),
                                 metric='pearson', parsimony_coefficient=0.001,
                                 p_crossover=0.5, p_subtree_mutation=0.2, p_hoist_mutation=0.2,

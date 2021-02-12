@@ -103,6 +103,9 @@ reg_2 = fn.ols_reg(p_data=data_reg, p_params=new_params, p_model="ols_en", p_ite
 residuales_2 = reg_2['results']['y_data']-reg_2['results']['y_data_p']
 hetero_2 = fn.check_hetero(residuales_2)
 vis.residual(residuales=residuales_2)
+
+#.850748
+#1400437493.505029
 # out of sample results
 
 # -- --------------------------------------------------- Classification Model: Logistic Regression Model -- # 
@@ -110,8 +113,8 @@ vis.residual(residuales=residuales_2)
 # -- without regularization
 
 # optimization
-data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
-                          p_model='logistic', p_iter=500)
+#data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
+                          #p_model='logistic', p_iter=500)
 
 # in sample results
 
@@ -120,8 +123,8 @@ data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=par
 # -- with elastic net regularization
 
 # optimization
-data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
-                          p_model='logistic_en', p_iter=500)
+#data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=params,
+                          #p_model='logistic_en', p_iter=500)
 
 # in sample results
 
@@ -130,20 +133,21 @@ data_op = fn.optimization(p_data=data_cla, p_type='classification', p_params=par
 # -- --------------------------------------------------------------------------------- Symbolic Features -- #
 
 # semilla para siempre obtener el mismo resultado
-np.random.seed(987)
+np.random.seed(546)
 
 # Symbolic features generation
 symbolic, table = fn.symbolic_features(p_x=data_reg['x_data'], p_y=data_reg['y_data'])
 x_simbolic = pd.DataFrame(symbolic['fit'], index=data_reg['x_data'].index)
 data_reg_sim = {'x_data': x_simbolic, 'y_data': data_y['co']}
-
+#corre = vis.correlation(pd.concat([x_simbolic.iloc[:, -15:], data_y['co']], axis=1))
+#plt.show()
 # -- ---------------------------------------------------------------------------------------- Models fit -- #
 # -- With autoregressive and hadamard features and symbolic features
 
 # -- Ordinary Least Squares Model (Regression)
 
 # without regularization
-reg_5 = fn.ols_reg(p_data=data_reg_sim, p_params=params, p_model="ols", p_iter=1000)
+reg_5 = fn.ols_reg(p_data=data_reg_sim, p_params=params, p_model="ols", p_iter=10000)
 residuales_5 = reg_5['results']['y_data']-reg_5['results']['y_data_p']
 hetero_5 = fn.check_hetero(residuales_5)
 vis.residual(residuales=residuales_5)
@@ -154,7 +158,7 @@ data_op = fn.optimization(p_data=data_reg_sim, p_type='regression', p_params=par
                           p_model='ols_en', p_iter=100000)
 # in sample results
 new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
-reg_6 = fn.ols_reg(p_data=data_reg_sim, p_params=new_params, p_model="ols_en", p_iter=100000)
+reg_6 = fn.ols_reg(p_data=data_reg_sim, p_params=new_params, p_model="ols_en", p_iter=10000)
 residuales_6 = reg_6['results']['y_data']-reg_6['results']['y_data_p']
 hetero_6 = fn.check_hetero(residuales_6)
 vis.residual(residuales=residuales_6)
