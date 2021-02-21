@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 import matplotlib. pyplot as plt
 import functions as fn
-from data import ohlc_data, params
+from data import ohlc_data, params, params_reg
 from visualizations import vs
 import visualizations as vis
 
@@ -86,7 +86,7 @@ cor_mat = data_x.corr()
 # -- without regularization
 
 # in sample results
-reg_1 = fn.ols_reg(p_data=data_reg, p_params=params, p_model="ols", p_iter=1000)
+reg_1 = fn.ols_reg(p_data=data_reg, p_params=params_reg, p_model="ols", p_iter=1000)
 residuales_1 = reg_1['results']['y_data']-reg_1['results']['y_data_p']
 hetero_1 = fn.check_hetero(residuales_1)
 vis.residual(residuales=residuales_1)
@@ -95,7 +95,7 @@ vis.residual(residuales=residuales_1)
 # -- with elasticnet regularization
 
 # optimization
-data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params,
+data_op = fn.optimization(p_data=data_reg, p_type='regression', p_params=params_reg,
                           p_model='ols_en', p_iter=100000)
 # in sample results
 new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
@@ -147,14 +147,14 @@ data_reg_sim = {'x_data': x_simbolic, 'y_data': data_y['co']}
 # -- Ordinary Least Squares Model (Regression)
 
 # without regularization
-reg_5 = fn.ols_reg(p_data=data_reg_sim, p_params=params, p_model="ols", p_iter=10000)
+reg_5 = fn.ols_reg(p_data=data_reg_sim, p_params=params_reg, p_model="ols", p_iter=10000)
 residuales_5 = reg_5['results']['y_data']-reg_5['results']['y_data_p']
 hetero_5 = fn.check_hetero(residuales_5)
 vis.residual(residuales=residuales_5)
 
 # with elastic net regularization
 
-data_op = fn.optimization(p_data=data_reg_sim, p_type='regression', p_params=params,
+data_op = fn.optimization(p_data=data_reg_sim, p_type='regression', p_params=params_reg,
                           p_model='ols_en', p_iter=100000)
 # in sample results
 new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}

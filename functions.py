@@ -375,7 +375,7 @@ def ols_reg(p_data, p_model, p_params, p_iter):
     elif p_model == 'ols_en':
 
         # Model specification
-        model = ElasticNet(alpha=1, normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],
+        model = ElasticNet(alpha=p_params['c'], normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],
                            fit_intercept=False)
 
     # error in model key
