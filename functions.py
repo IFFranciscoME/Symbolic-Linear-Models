@@ -9,7 +9,7 @@
 # -- repository: https://github.com/IFFranciscoME/A3_Regresion_Simbolica                                 -- #
 # -- --------------------------------------------------------------------------------------------------- -- #
 """
-
+import data as dt
 import numpy as np
 import pandas as pd
 import random
@@ -169,7 +169,16 @@ def features(p_data, p_nmax):
     str_names = [str(i) for i in names]
     r_features.columns = features_names[0:3].to_list() + str_names
 
-    return r_features, features_names.to_list()
+    data_t = r_features[r_features.columns[0]]
+    data_t.drop(data_t.tail(1).index, inplace=True)
+    # Target variables (co: regression, co_d: classification)
+    data_y = r_features[list(r_features.columns[1:3])].shift(1)
+    data_y.drop(data_y.head(1).index, inplace=True)
+    data_y = data_y.reset_index()
+    # Autoregressive and hadamard features
+    data_x = r_features[list(r_features.columns[3:])]
+    data_x = data_x.drop(data_x.tail(1).index)
+    return data_t, data_y, data_x, features_names.to_list()
 
 
 # -- --------------------------------------------------------------------- Metrics for Model Performance -- # 
@@ -237,7 +246,7 @@ def model_metrics(p_model, p_data, p_type):
         return {'model': p_model,
                 'results': {'x_data': p_data['x_data'], 'y_data': p_data['y_data'], 'y_data_p': y_model_data},
 
-                'metrics': {'rss': sum((y_model_data - p_data['y_data']) ** 2), 'coef': p_model.coef_,
+                'metrics': {'rss': sum((p_data['y_data']-y_model_data) ** 2), 'coef': p_model.coef_,
                             'r2': r2_score(p_data['y_data'], y_model_data), 'intercept': p_model.intercept_}}
 
     else:
@@ -369,14 +378,14 @@ def ols_reg(p_data, p_model, p_params, p_iter):
     if p_model == 'ols':
 
         # Model specification
-        model = LinearRegression(normalize=False, fit_intercept=False)
+        model = LinearRegression(normalize=False, fit_intercept=True)
 
     # Ordinary Least Squares regression without regularization
     elif p_model == 'ols_en':
 
         # Model specification
         model = ElasticNet(alpha=p_params['c'], normalize=False, max_iter=p_iter, l1_ratio=p_params['ratio'],
-                           fit_intercept=False)
+                           fit_intercept=True)
 
     # error in model key
     else:
@@ -412,8 +421,8 @@ def symbolic_features(p_x, p_y):
         error of prediction
 
     """
-    model = SymbolicTransformer(function_set=['inv', 'mul', 'div', 'abs', 'log', "min"],
-                                population_size=1000, hall_of_fame=150, n_components=15,
+    model = SymbolicTransformer(function_set=['inv', 'mul', 'div', 'abs', 'log',"min"],
+                                population_size=1000, hall_of_fame=150, n_components=10,
                                 generations=20, tournament_size=20,  stopping_criteria=.05,
                                 const_range=None, init_method='half and half', init_depth=(4, 16),
                                 metric='pearson', parsimony_coefficient=0.001,
@@ -426,7 +435,7 @@ def symbolic_features(p_x, p_y):
     gp_features = model.transform(p_x)
 
     model_fit = np.hstack((p_x, gp_features))
-    results = {'fit': model_fit, 'params': model_params, 'model': model}
+    results = {'fit': model_fit, 'params': model_params, 'model': model, "features": gp_features}
     best_p = model._best_programs
     best_p_dict={}
 
@@ -589,3 +598,55 @@ def check_hetero(param_data):
     # si p-value menor a alpha se concluye que no hay heterodasticidad
     heter = True if heterosced[1] > alpha else False
     return heter
+
+
+def variables(data_y, data_x, N):
+    frames_x = np.array_split(data_x, N)
+    frames_y = np.array_split(data_y, N)
+    dict_all = {}
+    for frame in range(0, N):
+        x_train, x_test, y_train, y_test = train_test_split(frames_x[frame], frames_y[frame],
+                                                            test_size=.2, shuffle=False)
+        dict_all["frame"+str(frame + 1)] = [x_train, x_test, y_train, y_test]
+    return dict_all
+
+
+def actual_test(dict_split, params, definition,reg_type):
+    data_reg = {'x_data': dict_split[0], 'y_data': dict_split[2]["co"]}
+    reg = ols_reg(p_data=data_reg, p_params=params, p_model=reg_type, p_iter=100000)
+    pred_test = reg["model"].predict(dict_split[1])
+    residuales = reg['results']['y_data'] - reg['results']['y_data_p']
+    hetero = check_hetero(residuales)
+    rss = sum((dict_split[3]["co"]-pred_test) ** 2)
+    return rss, data_reg, reg, definition
+
+
+def busqueda_en_train(dict_all, n):
+    best_of_each = []
+    for split in range(0, n):
+        dict_split = dict_all["frame" + str(split + 1)]
+
+        #normal
+        rss, data_reg, model, definition= actual_test(dict_split, dt.params_reg, "normal", "ols")
+        best_of_each.append([definition, rss, split, model])
+        #regularización
+        data_op = optimization(p_data=data_reg, p_type='regression', p_params=dt.params_reg,
+                               p_model='ols_en', p_iter=100000)
+        new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+        rss, data_reg, model, definition = actual_test(dict_split, new_params, "normal + regularizacion", "ols_en")
+        best_of_each.append([definition, rss, split, model])
+        #simbolica + regularización
+        np.random.seed(546)
+        symbolic, table = symbolic_features(p_x=data_reg['x_data'], p_y=data_reg['y_data'])
+        dict_split[0] = pd.DataFrame(symbolic['fit'], index=data_reg['x_data'].index)
+        xtest = pd.DataFrame(np.hstack((dict_split[1], symbolic["model"].transform(dict_split[1]))), index=dict_split[1].index)
+        dict_split[1] = xtest
+        data_reg_sim = {'x_data': dict_split[0], 'y_data': dict_split[2]["co"]}
+        # with elastic net regularization
+        data_op = optimization(p_data=data_reg_sim, p_type='regression', p_params=dt.params_reg,
+                               p_model='ols_en', p_iter=100000)
+        # in sample results
+        new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+        rss, data_reg, model, definition = actual_test(dict_split, new_params, "simbolica + regularización", "ols_en")
+        best_of_each.append([definition, rss, split, model])
+    return best_of_each

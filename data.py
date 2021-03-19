@@ -16,6 +16,7 @@ from os import listdir, path
 from os.path import isfile, join
 import quandl as quandl
 
+
 # authentication for quandl
 quandl.ApiConfig.api_key = "4WLCk2ZUAMAPPyowvAYr"
 
@@ -65,25 +66,21 @@ for file_f in files_f:
         price_data['MP_D_' + year_f] = data_f
 
 # Train data from 2011 to 2018
-train_data = pd.concat([price_data[list(price_data.keys())[0]], price_data[list(price_data.keys())[1]],
-                       price_data[list(price_data.keys())[2]], price_data[list(price_data.keys())[3]],
-                       price_data[list(price_data.keys())[4]], price_data[list(price_data.keys())[5]],
-                       price_data[list(price_data.keys())[6]], price_data[list(price_data.keys())[7]]])
+all_data = pd.concat([price_data[list(price_data.keys())[0]], price_data[list(price_data.keys())[1]],
+                      price_data[list(price_data.keys())[2]], price_data[list(price_data.keys())[3]],
+                      price_data[list(price_data.keys())[4]], price_data[list(price_data.keys())[5]],
+                      price_data[list(price_data.keys())[6]], price_data[list(price_data.keys())[7]],
+                      price_data[list(price_data.keys())[8]], price_data[list(price_data.keys())[9]]])
 
-# Test data 2019
-test_data = price_data[list(price_data.keys())[8]]
-
-# Validation data 2020
-val_data = price_data[list(price_data.keys())[9]]
 
 # historical data 
-ohlc_data = {'train': train_data, 'test': test_data, 'val': val_data}
+#ohlc_data = {'train1': train_data1, 'train2': train_data2 , 'train3': train_data3, 'test': test_data}
 
 # --------------------------------------------------------------------- Parameters for Symbolic Features -- #
 # --------------------------------------------------------------------- -------------------------------- -- #
 
 symbolic_params = {'functions': ["sub", "add", 'inv', 'mul', 'div', 'abs', 'log','max','min'],
-                   'population': 2000, 'tournament':20, 'hof': 20, 'generations': 5, 'n_features':10,
+                   'population': 2000, 'tournament': 20, 'hof': 20, 'generations': 5, 'n_features':10,
                    'init_depth': (4,12), 'init_method': 'half and half', 'parsimony': 0, 'constants': None,
                    'metric': 'pearson', 'metric_goal': 0.7,
                    'prob_cross': 0.4, 'prob_mutation_subtree': 0.3,
@@ -95,4 +92,4 @@ symbolic_params = {'functions': ["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'
 
 # 100 different values for each parameter
 params = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(0, 2, 0.02)}
-params_reg = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(.1, 1, 0.1)}
+params_reg = {'ratio': np.arange(0, 1, 0.01), 'c': np.arange(.2, 1, 0.2)}
