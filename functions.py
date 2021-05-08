@@ -14,13 +14,16 @@ import numpy as np
 import pandas as pd
 import random
 from sympy import *
+from statsmodels.compat import lzip
+import statsmodels.stats.api as sms
 from statsmodels.stats.diagnostic import het_arch
+from statsmodels.stats.diagnostic import acorr_ljungbox
 from sklearn.linear_model import LinearRegression, ElasticNet, LogisticRegression
 from sklearn.preprocessing import StandardScaler, RobustScaler, MaxAbsScaler
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_auc_score, roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
-
+import visualizations as vis
 from gplearn.genetic import SymbolicTransformer
 import gplearn as gpl
 
@@ -380,7 +383,7 @@ def ols_reg(p_data, p_model, p_params, p_iter):
         # Model specification
         model = LinearRegression(normalize=False, fit_intercept=True)
 
-    # Ordinary Least Squares regression without regularization
+    # Ordinary Least Squares regression with regularization
     elif p_model == 'ols_en':
 
         # Model specification
@@ -421,15 +424,14 @@ def symbolic_features(p_x, p_y):
         error of prediction
 
     """
-    model = SymbolicTransformer(function_set=['inv', 'mul', 'div', 'abs', 'log',"min"],
-                                population_size=1000, hall_of_fame=150, n_components=10,
-                                generations=20, tournament_size=20,  stopping_criteria=.05,
-                                const_range=None, init_method='half and half', init_depth=(4, 16),
-                                metric='pearson', parsimony_coefficient=0.001,
-                                p_crossover=0.5, p_subtree_mutation=0.2, p_hoist_mutation=0.2,
-                                p_point_mutation=0.1, p_point_replace=.1,
-                                verbose=1, random_state=None, n_jobs=-1, feature_names=p_x.columns,
-                                warm_start=True)
+    model = SymbolicTransformer(function_set=["sub", "add", 'inv', 'mul', 'div', 'abs', 'log'],
+                                population_size=5000, hall_of_fame=20, n_components=10,
+                                tournament_size=20,
+                                generations=5, init_depth=(4, 8), init_method='half and half',
+                                parsimony_coefficient=0.1, const_range=None, metric='pearson',
+                                stopping_criteria=0.65, p_crossover=0.4, p_subtree_mutation=0.3,
+                                p_hoist_mutation=0.1, p_point_mutation=0.2, verbose=True,
+                                warm_start=True, n_jobs=-1, feature_names=p_x.columns)
     model.fit_transform(p_x, p_y)
     model_params = model.get_params()
     gp_features = model.transform(p_x)
@@ -616,9 +618,19 @@ def actual_test(dict_split, params, definition,reg_type):
     reg = ols_reg(p_data=data_reg, p_params=params, p_model=reg_type, p_iter=100000)
     pred_test = reg["model"].predict(dict_split[1])
     residuales = reg['results']['y_data'] - reg['results']['y_data_p']
+    #Pruebas de residuales
+    vis.residual(residuales=residuales)
+    vis.histograma(residuales)
+    #heterocedasticidad
     hetero = check_hetero(residuales)
+    #jungbox
+    ljung = acorr_ljungbox(residuales, lags=7,return_df=True)
+    #normality
+    name = ["Jarque-Bera", "Chi2 two tail prob", "Skew","Kurtosis"]
+    test = sms.jarque_bera(residuales)
+    jarquebera = lzip(name,test)
     rss = sum((dict_split[3]["co"]-pred_test) ** 2)
-    return rss, data_reg, reg, definition
+    return rss, data_reg, reg, definition, hetero, ljung, jarquebera
 
 
 def busqueda_en_train(dict_all, n):
@@ -627,26 +639,28 @@ def busqueda_en_train(dict_all, n):
         dict_split = dict_all["frame" + str(split + 1)]
 
         #normal
-        rss, data_reg, model, definition= actual_test(dict_split, dt.params_reg, "normal", "ols")
-        best_of_each.append([definition, rss, split, model])
+        rss, data_reg, model, definition, hetero, jlung, jarquebera = actual_test(dict_split,
+                                                                                  dt.params_reg, "normal", "ols")
+        best_of_each.append([definition, rss, split, hetero, jlung, jarquebera])
+        #best_of_each.append([definition, rss, split, hetero, jlung, model])
         #regularización
-        data_op = optimization(p_data=data_reg, p_type='regression', p_params=dt.params_reg,
-                               p_model='ols_en', p_iter=100000)
-        new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
-        rss, data_reg, model, definition = actual_test(dict_split, new_params, "normal + regularizacion", "ols_en")
-        best_of_each.append([definition, rss, split, model])
+        #data_op = optimization(p_data=data_reg, p_type='regression', p_params=dt.params_reg,
+         #                      p_model='ols_en', p_iter=100000)
+        #new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+        #rss, data_reg, model, definition, hetero, jlung = actual_test(dict_split, new_params, "normal + regularizacion", "ols_en")
+        #best_of_each.append([definition, rss, split, hetero, jlung, model])
         #simbolica + regularización
-        np.random.seed(546)
-        symbolic, table = symbolic_features(p_x=data_reg['x_data'], p_y=data_reg['y_data'])
-        dict_split[0] = pd.DataFrame(symbolic['fit'], index=data_reg['x_data'].index)
-        xtest = pd.DataFrame(np.hstack((dict_split[1], symbolic["model"].transform(dict_split[1]))), index=dict_split[1].index)
-        dict_split[1] = xtest
-        data_reg_sim = {'x_data': dict_split[0], 'y_data': dict_split[2]["co"]}
+        #np.random.seed(546)
+        #symbolic, table = symbolic_features(p_x=data_reg['x_data'], p_y=data_reg['y_data'])
+        #dict_split[0] = pd.DataFrame(symbolic['fit'], index=data_reg['x_data'].index)
+        #xtest = pd.DataFrame(np.hstack((dict_split[1], symbolic["model"].transform(dict_split[1]))), index=dict_split[1].index)
+        #dict_split[1] = xtest
+       # data_reg_sim = {'x_data': dict_split[0], 'y_data': dict_split[2]["co"]}
         # with elastic net regularization
-        data_op = optimization(p_data=data_reg_sim, p_type='regression', p_params=dt.params_reg,
-                               p_model='ols_en', p_iter=100000)
+        #data_op = optimization(p_data=data_reg_sim, p_type='regression', p_params=dt.params_reg,
+         #                      p_model='ols_en', p_iter=100000)
         # in sample results
-        new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
-        rss, data_reg, model, definition = actual_test(dict_split, new_params, "simbolica + regularización", "ols_en")
-        best_of_each.append([definition, rss, split, model])
+        #new_params = {"ratio": data_op["population"][0][0], "c": data_op["population"][0][1]}
+        #rss, data_reg, model, definition, hetero, jlung = actual_test(dict_split, new_params, "simbolica + regularización", "ols_en")
+        #best_of_each.append([definition, rss, split, hetero, jlung, model])
     return best_of_each

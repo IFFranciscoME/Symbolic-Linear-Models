@@ -71,3 +71,11 @@ Domingo 31-01-2020:
 - Mejor modelo optimizado in sample para regresión con y sin variables simbólicas
 - cambio hiperparametros simbolic features
 - visualziación de distribuciones variables simbolicas
+
+
+Interpretacion Jarque-bera
+-Interpretación: La prueba de Jarque-Bera utiliza un estadístico de prueba que involucra
+la curtosis y la asimetría. Intenta resolver si “Los residuos tienen una distribución normal”,
+esta H0 se rechaza si p≤α, o JB≥VC, de lo contrario H0 no se rechaza. (VC de 5%=5.9915)
+ -Respuesta: En este caso Pvalue>0.05 y 2.2973<5.9915, por lo que los residuos
+ tienen una distribución normal
